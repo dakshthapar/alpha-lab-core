@@ -4,6 +4,7 @@
 # --- Data & Logs ---
 data/
 logs/
+log/
 fyers_logs/
 *.parquet
 *.csv
