@@ -1,0 +1,23 @@
+# --- System ---
+.DS_Store
+Thumbs.db
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.so
+*.dylib
+
+# --- IDEs ---
+.vscode/
+.idea/
+
+# --- Project Specific (VERY IMPORTANT) ---
+data/
+*.parquet
+*.csv
+fyers_logs/
+logs/
+libs/
