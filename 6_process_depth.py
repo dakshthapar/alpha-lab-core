@@ -4,7 +4,7 @@ import polars as pl
 from tqdm import tqdm
 
 # --- CONFIG ---
-INPUT_FILE = "data/synthetic_factory_data.parquet"
+INPUT_FILE = "data/synthetic_dense_data.parquet"
 OUTPUT_FILE = "data/final_training_data.parquet"
 DEPTH_LEVELS = 5
 
@@ -17,7 +17,7 @@ def parse_depth_string(depth_str):
         if not depth_str or depth_str == "[]":
             return []
         return ast.literal_eval(depth_str)
-    except:
+    except:  # noqa: E722
         return []
 
 
