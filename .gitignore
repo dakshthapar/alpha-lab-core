@@ -1,23 +1,16 @@
-# --- System ---
-.DS_Store
-Thumbs.db
+# --- Secrets (NEVER COMMIT) ---
+.env
 
-# --- Python ---
+# --- Data & Logs ---
+data/
+logs/
+fyers_logs/
+*.parquet
+*.csv
+
+# --- Python & System ---
 __pycache__/
 *.py[cod]
 .venv/
-venv/
-*.so
-*.dylib
-
-# --- IDEs ---
+.DS_Store
 .vscode/
-.idea/
-
-# --- Project Specific (VERY IMPORTANT) ---
-data/
-*.parquet
-*.csv
-fyers_logs/
-logs/
-libs/
