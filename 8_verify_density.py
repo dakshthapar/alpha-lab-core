@@ -6,7 +6,10 @@ import polars as pl
 # --- CONFIG ---
 # This must match the OUTPUT of Script 6 (The Parser)
 # If you changed Script 6 to save as "train.parquet", change this line.
-INPUT_FILE = "data/final_training_data.parquet"
+if len(sys.argv) > 1:
+    INPUT_FILE = sys.argv[1]
+else:
+    INPUT_FILE = "data/final_training_data.parquet"
 
 
 def print_lob_snapshot(row):

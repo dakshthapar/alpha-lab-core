@@ -48,27 +48,27 @@ def get_regime_params(seed):
         p = {
             "fund_vol": 1e-8,
             "kappa": 1.67e-13,
-            "num_value_agents": 100,
-            "sigma_n": 10000,   # Standard "smartness" for Value Agents
+            "num_value_agents": 500, # Back to 500
+            "sigma_n": 100000,   # 10x NOISE -> Wider Spread
             "num_noise": 50
         }
     elif dice < 0.80:
         regime = "VOLATILE" # Panic / Flash Crash
         p = {
-            "fund_vol": 1e-7,       # 10x Volatility
+            "fund_vol": 1e-7,       
             "kappa": 1.67e-13,
-            "num_value_agents": 50, # Low Liquidity (Thin Book)
-            "sigma_n": 100000,      # Confused Smart Money (High Error)
+            "num_value_agents": 500, # Increased to 500
+            "sigma_n": 100000,      
             "num_noise": 50
         }
     else:
-        regime = "MOMENTUM" # Hype / Comparison
+        regime = "MOMENTUM" 
         p = {
             "fund_vol": 1e-8,
-            "kappa": 1.67e-15,      # 100x Lower Mean Reversion -> Trends persist
-            "num_value_agents": 100,
+            "kappa": 1.67e-15,      
+            "num_value_agents": 800, # Increased to 800
             "sigma_n": 10000,
-            "num_noise": 100        # High Retail Activity
+            "num_noise": 200        # High Retail Activity
         }
         
     # 2. Domain Randomization (Perturb by +/- 20%)
@@ -237,6 +237,11 @@ if __name__ == "__main__":
     parser.add_argument("--test-mode", action="store_true", help="Run only 3 days (one of each regime) for testing")
     parser.add_argument("--days", type=int, default=1000, help="Number of days to simulate")
     parser.add_argument("--start-seed", type=int, default=1000, help="Starting random seed")
+    parser.add_argument("--regime", type=str, default=None, help="Force a specific regime (STANDARD, VOLATILE, MOMENTUM)")
+    
+    # Cores arg deprecated (handled by launcher), but kept for back-compat to ignore
+    parser.add_argument("--cores", type=int, default=1, help="Ignored in this version")
+
     args = parser.parse_args()
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -244,15 +249,25 @@ if __name__ == "__main__":
     num_days = 3 if args.test_mode else args.days
     start_seed = args.start_seed
     
-    print(f"--- LAUNCHING REGIME FACTORY ({num_days} DAYS) ---")
-    print(f"Test Mode: {args.test_mode}")
+    print(f"--- BATCH ({num_days} DAYS) | SEED {start_seed} ---")
+    if args.regime: print(f"FORCED REGIME: {args.regime}")
     
     for i in tqdm(range(start_seed, start_seed + num_days), desc="Simulating"):
         try:
-            day_df, regime = run_day(seed=i)
+            # 1. Check for success (Idempotency) BEFORE running
+            # We need to compute regime to know the filename, but that's fast.
+            regime_check, _ = get_regime_params(i)
+            # If override is set, use that
+            if args.regime: regime_check = args.regime
+            
+            expected_file = DATA_DIR / f"sim_day_{i}_{regime_check}.parquet"
+            if expected_file.exists():
+                # verify it's not empty? For now just assume existence = done
+                continue
+                
+            day_df, regime = run_day(seed=i, regime_override=args.regime)
             
             if day_df is not None and day_df.height > 100:
-                # Filename includes REGIME for easier debugging/splitting later
                 file_path = DATA_DIR / f"sim_day_{i}_{regime}.parquet"
                 day_df.write_parquet(file_path)
             
@@ -262,4 +277,4 @@ if __name__ == "__main__":
             print(f"Error Day {i}: {e}")
             continue
             
-    print(f"\n--- BATCH COMPLETE ---")
+    # print(f"--- BATCH DONE ---") # Optional, keep logs clean for parallel runner
