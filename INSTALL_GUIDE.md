@@ -45,7 +45,7 @@ pip3 install uv
    **Option A: For NVIDIA GPU (CUDA 12.1)**
    *Recommended for 3080 Ti and faster training.*
    ```bash
-   uv pip install -r requirements-gpu.txt
+   uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match
    ```
 
    **Option B: For CPU Only**
@@ -61,11 +61,11 @@ The ABIDES (Agent-Based Interactive Discrete Event Simulator) library is a core 
 ```bash
 # 1. Install Core
 cd libs/abides/abides-core
-pip install -e .
+uv pip install -e .
 
 # 2. Install Markets Extension
 cd ../abides-markets
-pip install -e .
+uv pip install -e .
 
 # 3. Return to Project Root
 cd ../../../

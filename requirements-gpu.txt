@@ -1,23 +1,23 @@
+--extra-index-url https://download.pytorch.org/whl/cu121
+
 # --- CORE DATA STACK ---
 polars>=0.20.0
 pandas>=2.0.0
 numpy>=1.24.0
 tqdm>=4.66.0
-pyarrow>=14.0.0      # Critical for Parquet file I/O
+pyarrow>=14.0.0
 
-# --- LIVE TRADING & HARVESTING (AWS Compatible) ---
+# --- LIVE TRADING & HARVESTING ---
 fyers-apiv3>=3.0.0
 websocket-client>=1.6.0
-# Optional: For headless browser login on AWS
 selenium>=4.15.0
 webdriver-manager>=4.0.0
 pyotp>=2.9.0
 
-# --- SIMULATION & ML (ABIDES Dependencies) ---
-# Note: ABIDES itself is installed from source (see guide below)
+# --- SIMULATION & ML ---
 matplotlib>=3.7.0
 scipy>=1.10.0
 
-# --- DEEP LEARNING (GPU/CUDA 12.1 Version) ---
-torch>=2.1.0 --index-url https://download.pytorch.org/whl/cu121
-torchvision>=0.16.0 --index-url https://download.pytorch.org/whl/cu121
+# --- DEEP LEARNING (GPU/CUDA 12.1) ---
+torch>=2.1.0
+torchvision>=0.16.0
