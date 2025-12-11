@@ -40,12 +40,18 @@ pip3 install uv
    ```
 
 3. **Install Dependencies**
-   ```bash
-   # Standard Install
-   uv pip install -r requirements.txt
+   Choose the appropriate command for your hardware:
 
-   # [Optional] Force CUDA support for PyTorch (if using GPU)
-   # uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+   **Option A: For NVIDIA GPU (CUDA 12.1)**
+   *Recommended for 3080 Ti and faster training.*
+   ```bash
+   uv pip install -r requirements-gpu.txt
+   ```
+
+   **Option B: For CPU Only**
+   *Use this for cloud servers without GPU or basic laptops.*
+   ```bash
+   uv pip install -r requirements-cpu.txt
    ```
 
 ## Phase 3: Installing ABIDES (From Source)
