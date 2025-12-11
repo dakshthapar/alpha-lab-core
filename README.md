@@ -30,6 +30,12 @@ To generate a large dataset (e.g., 1 year of trading):
 python 14_launch_parallel.py --total-days 252 --cores 8
 ```
 
+You can also set a hard time limit (in hours) to prevent running over budget:
+```bash
+# Stop all workers after 2.5 hours
+python 14_launch_parallel.py --total-days 1000 --cores 16 --duration 2.5
+```
+
 ### 3. Verify Data Density
 Check the statistical properties of the generated order books:
 ```bash

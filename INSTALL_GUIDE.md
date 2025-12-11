@@ -95,6 +95,9 @@ For generating large datasets (e.g., 20,000 days), use the parallel launcher scr
 ```bash
 # Example: Generate 100 days using 16 cores
 python 14_launch_parallel.py --total-days 100 --cores 16
+
+# Example: Run for a maximum of 4 hours (useful for strict cloud budgets)
+python 14_launch_parallel.py --total-days 5000 --cores 32 --duration 4.0
 ```
 
 ---
