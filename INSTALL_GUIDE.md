@@ -35,7 +35,7 @@ pip3 install uv
 2. **Create Virtual Environment**
    We use `uv` for significantly faster dependency resolution.
    ```bash
-   uv venv .venv
+   uv venv .venv --python 3.10
    source .venv/bin/activate
    ```
 
