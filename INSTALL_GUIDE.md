@@ -1,0 +1,117 @@
+# Alpha Lab Core - Installation Guide
+
+This guide covers the setup process for the Alpha Lab Core market simulation environment.
+
+## Phase 1: System Preparation
+
+### Option A: Arch Linux (Local Development)
+
+```bash
+# 1. Install System Basics
+sudo pacman -S git python python-pip base-devel cuda
+
+# 2. Install uv (Fast pip replacement)
+pip install uv --break-system-packages
+```
+
+### Option B: Ubuntu / Debian (Cloud Server / AWS)
+
+```bash
+# 1. Install System Basics
+sudo apt update && sudo apt install -y git python3-pip python3-venv build-essential
+
+# 2. Install uv
+pip3 install uv
+```
+
+## Phase 2: Project Setup & Environment
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/alpha-lab-core.git
+   cd alpha-lab-core
+   ```
+
+2. **Create Virtual Environment**
+   We use `uv` for significantly faster dependency resolution.
+   ```bash
+   uv venv .venv
+   source .venv/bin/activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   # Standard Install
+   uv pip install -r requirements.txt
+
+   # [Optional] Force CUDA support for PyTorch (if using GPU)
+   # uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+   ```
+
+## Phase 3: Installing ABIDES (From Source)
+
+The ABIDES (Agent-Based Interactive Discrete Event Simulator) library is a core component and must be installed in editable mode. The source code is located in `libs/abides`.
+
+```bash
+# 1. Install Core
+cd libs/abides/abides-core
+pip install -e .
+
+# 2. Install Markets Extension
+cd ../abides-markets
+pip install -e .
+
+# 3. Return to Project Root
+cd ../../../
+```
+
+**Verification:**
+Run this command to check if ABIDES is correctly installed and importable:
+```bash
+python -c "import abides_core; import abides_markets; print('✅ ABIDES Installed Successfully')"
+```
+
+## Phase 4: Validation Run
+
+To verify that the Simulation Factory and detailed market regimes are working correctly, run the factory in test mode.
+
+**Run the Factory (Test Mode):**
+This command simulates 3 days of market data (one for each market regime: Standard, Volatile, Momentum).
+```bash
+python 13_regime_factory.py --test-mode
+```
+
+**Check the Data:**
+Verify that the output files have been generated:
+```bash
+ls -lh data/training_batches/
+```
+*Success: You should see files like `sim_day_1000_STANDARD.parquet`, `sim_day_1001_VOLATILE.parquet`, etc.*
+
+## Phase 5: Mass Production (Advanced)
+
+For generating large datasets (e.g., 20,000 days), use the parallel launcher script which utilizes multiple CPU cores.
+
+```bash
+# Example: Generate 100 days using 16 cores
+python 14_launch_parallel.py --total-days 100 --cores 16
+```
+
+---
+**Folder Structure Reference**
+
+```plaintext
+alpha-lab-core/
+├── .venv/                   # Active Environment
+├── data/                    # (Ignored by Git)
+│   ├── training_batches/    # Raw Daily Simulation Files
+│   └── TRAIN_FULL.parquet   # Merged Dataset
+├── libs/
+│   └── abides/              # The JPMC Source Code
+├── 1_fyers_harvester.py     # Real Data Collector
+├── 11_mass_production.py    # Basic Simulator
+├── 13_regime_factory.py     # Advanced Regime Simulator
+├── 14_launch_parallel.py    # Parallel Execution Launcher
+├── requirements.txt         # Dependency File
+└── INSTALL_GUIDE.md         # This Guide
+```
