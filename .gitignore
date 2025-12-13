@@ -1,5 +1,10 @@
 # --- Secrets (NEVER COMMIT) ---
 .env
+*.key
+*.pem
+credentials.json
+config.json
+fyers_credentials.txt
 
 # --- Data & Logs ---
 data/
@@ -8,10 +13,54 @@ log/
 fyers_logs/
 *.parquet
 *.csv
+*.db
+*.sqlite
+*.sqlite3
 
-# --- Python & System ---
+# --- Python Artifacts ---
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# --- Virtual Environments ---
 .venv/
-.DS_Store
+venv/
+ENV/
+env/
+
+# --- IDE & Editor Files ---
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# --- OS-Specific Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Backup Files ---
+*.bak
+*.backup
+*.tmp
+*~
+
+# --- Testing & Coverage ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
