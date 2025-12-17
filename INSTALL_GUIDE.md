@@ -12,6 +12,13 @@ sudo pacman -S git python python-pip base-devel cuda
 
 # 2. Install uv (Fast pip replacement)
 pip install uv --break-system-packages
+
+# 3. Add uv to PATH (if not already added)
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# 4. Verify uv installation
+uv --version
 ```
 
 ### Option B: Ubuntu / Debian (Cloud Server / AWS)
@@ -22,6 +29,13 @@ sudo apt update && sudo apt install -y git python3-pip python3-venv build-essent
 
 # 2. Install uv
 pip3 install uv
+
+# 3. Add uv to PATH (if not already added)
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# 4. Verify uv installation
+uv --version
 ```
 
 ## Phase 2: Project Setup & Environment
@@ -48,10 +62,50 @@ pip3 install uv
    uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match
    ```
 
+   **Verify GPU Setup:**
+   ```bash
+   # Check comprehensive GPU info
+   python -c "
+import torch
+print(f'PyTorch Version: {torch.__version__}')
+print(f'CUDA Available: {torch.cuda.is_available()}')
+print(f'CUDA Version: {torch.version.cuda}')
+print(f'Number of GPUs: {torch.cuda.device_count()}')
+if torch.cuda.is_available():
+    print(f'Current GPU: {torch.cuda.current_device()}')
+    print(f'GPU Name: {torch.cuda.get_device_name(0)}')
+    print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB')
+"
+
+   # Test actual GPU computation
+   python -c "
+import torch
+if torch.cuda.is_available():
+    x = torch.rand(5, 3).cuda()
+    print(f'✅ Tensor created on GPU: {x.device}')
+    print(f'Tensor:\n{x}')
+else:
+    print('❌ CUDA not available')
+"
+   ```
+
    **Option B: For CPU Only**
    *Use this for cloud servers without GPU or basic laptops.*
    ```bash
    uv pip install -r requirements-cpu.txt
+   ```
+
+   **Verify CPU Setup:**
+   ```bash
+   # Check PyTorch installation and perform basic computation
+   python -c "
+import torch
+print(f'PyTorch Version: {torch.__version__}')
+print(f'CUDA Available: {torch.cuda.is_available()}')
+x = torch.rand(5, 3)
+print(f'✅ Tensor created on CPU: {x.device}')
+print(f'Tensor:\n{x}')
+"
    ```
 
 ## Phase 3: Installing ABIDES (From Source)
