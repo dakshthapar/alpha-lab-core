@@ -65,28 +65,10 @@ uv --version
    **Verify GPU Setup:**
    ```bash
    # Check comprehensive GPU info
-   python -c "
-import torch
-print(f'PyTorch Version: {torch.__version__}')
-print(f'CUDA Available: {torch.cuda.is_available()}')
-print(f'CUDA Version: {torch.version.cuda}')
-print(f'Number of GPUs: {torch.cuda.device_count()}')
-if torch.cuda.is_available():
-    print(f'Current GPU: {torch.cuda.current_device()}')
-    print(f'GPU Name: {torch.cuda.get_device_name(0)}')
-    print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB')
-"
+   python -c "import torch; print(f'PyTorch Version: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'CUDA Version: {torch.version.cuda}'); print(f'Number of GPUs: {torch.cuda.device_count()}'); print(f'Current GPU: {torch.cuda.current_device()}') if torch.cuda.is_available() else None; print(f'GPU Name: {torch.cuda.get_device_name(0)}') if torch.cuda.is_available() else None; print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB') if torch.cuda.is_available() else None"
 
    # Test actual GPU computation
-   python -c "
-import torch
-if torch.cuda.is_available():
-    x = torch.rand(5, 3).cuda()
-    print(f'✅ Tensor created on GPU: {x.device}')
-    print(f'Tensor:\n{x}')
-else:
-    print('❌ CUDA not available')
-"
+   python -c "import torch; x = torch.rand(5, 3).cuda() if torch.cuda.is_available() else None; print(f'✅ Tensor created on GPU: {x.device}') if torch.cuda.is_available() else print('❌ CUDA not available'); print(f'Tensor:\n{x}') if torch.cuda.is_available() else None"
    ```
 
    **Option B: For CPU Only**
@@ -98,14 +80,7 @@ else:
    **Verify CPU Setup:**
    ```bash
    # Check PyTorch installation and perform basic computation
-   python -c "
-import torch
-print(f'PyTorch Version: {torch.__version__}')
-print(f'CUDA Available: {torch.cuda.is_available()}')
-x = torch.rand(5, 3)
-print(f'✅ Tensor created on CPU: {x.device}')
-print(f'Tensor:\n{x}')
-"
+   python -c "import torch; print(f'PyTorch Version: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}'); x = torch.rand(5, 3); print(f'✅ Tensor created on CPU: {x.device}'); print(f'Tensor:\n{x}')"
    ```
 
 ## Phase 3: Installing ABIDES (From Source)
