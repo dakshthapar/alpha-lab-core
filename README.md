@@ -34,6 +34,7 @@ It leverages [ABIDES](https://github.com/jpmorganchase/abides) (Agent-Based Inte
 ### ⚡ High-Performance Data Pipeline
 - Built on **Polars** and **PyArrow** for blazing-fast tick-by-tick data processing
 - Efficient Parquet file format for storage and retrieval
+- **Streaming merge engine** - processes datasets of any size without RAM constraints
 - Handles millions of order book updates with minimal memory overhead
 
 ### 🚀 Parallel Processing
@@ -90,34 +91,45 @@ cd ../../../
 ## 🚀 Quick Start
 
 ### 1️⃣ Generate Test Data (3 Days)
-Run the regime factory in test mode to verify your setup:
+Verify your setup with a quick test:
 ```bash
 python 13_regime_factory.py --test-mode
 ```
-This creates `data/training_batches/sim_day_1000_STANDARD.parquet` (and similar files).
 
 ### 2️⃣ Large-Scale Simulation
-Generate a year of trading data (252 trading days):
+Generate thousands of trading days using parallel processing:
 ```bash
-python 14_launch_parallel.py --total-days 252 --cores 8
+# Example: 5000 days using 16 cores
+python 14_launch_parallel.py --total-days 5000 --cores 16
+
+# With time limit (useful for cloud budgets):
+python 14_launch_parallel.py --total-days 10000 --cores 32 --duration 4.0
 ```
 
-**Time-Limited Execution** (useful for cloud environments):
+### 3️⃣ Split and Merge Data
+Split batch files by regime into train/val/test, then merge each:
 ```bash
-# Stop all workers after 2.5 hours
-python 14_launch_parallel.py --total-days 1000 --cores 16 --duration 2.5
+python 15_split_and_merge.py
 ```
+**Output**: `TRAIN.parquet` (70%), `VAL.parquet` (15%), `TEST.parquet` (15%)
 
-### 3️⃣ Validate Data Quality
-Check spread, volatility, and LOB depth statistics:
+✨ **Stratified splitting** maintains regime distribution across all splits using streaming merge for memory efficiency.
+
+### 4️⃣ (Optional) Generate OOD Test Data
+For robustness testing, generate fresh data with different random seeds:
+```bash
+# Generate 500 new days with seed offset
+python 14_launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
+
+# Merge OOD data
+python 16_merge_ood.py
+```
+**Output**: `TEST_OOD.parquet` - tests model on completely unseen trajectories
+
+### 5️⃣ Validate Data Quality
+Verify spread, volatility, and LOB statistics:
 ```bash
 python 9_validate_data_quality.py
-```
-
-### 4️⃣ Merge Batches
-Combine individual simulation files into a single training dataset:
-```bash
-python 12_merge_batches.py
 ```
 
 ---
@@ -134,7 +146,10 @@ alpha-lab-core/
 │
 ├── 📁 data/                     # Generated data (gitignored)
 │   ├── training_batches/        # Daily simulation outputs (.parquet)
-│   └── TRAIN_FULL.parquet       # Merged training dataset
+│   ├── TRAIN.parquet            # Training set (70%)
+│   ├── VAL.parquet              # Validation set (15%)
+│   ├── TEST.parquet             # Test set (15%)
+│   └── TEST_OOD.parquet         # Out-of-distribution test (optional)
 │
 ├── 🔧 Simulation Scripts
 │   ├── 13_regime_factory.py     # ⭐ Main simulation engine with regime support
@@ -154,8 +169,10 @@ alpha-lab-core/
 │   ├── 1_fyers_harvester.py     # Real-time Indian market data collector
 │   └── 0_simulate_fyers.py      # Fyers API simulator (testing)
 │
-├── 🛠️ Utilities
-│   ├── 12_merge_batches.py      # Batch merger and deduplicator
+├── 🛠️ Data Processing
+│   ├── 15_split_and_merge.py    # ⭐ Stratified train/val/test split + merge
+│   ├── 16_merge_ood.py          # OOD test data merger
+│   ├── 12_merge_batches.py      # (Legacy) Single file merger
 │   ├── 6_process_depth.py       # Depth data processor
 │   └── debug_*.py               # Debugging utilities
 │
@@ -260,6 +277,7 @@ pytest tests/
 
 ### Performance
 - **Memory usage**: Full LOB reconstruction can require significant RAM for long simulations
+  - ✅ **Merge operations** use streaming mode and can process datasets larger than available RAM
 - **CPU bound**: Simulation speed scales linearly with CPU cores, not GPU accelerated
 - **Storage**: A year of tick data (252 days) can require 50-100GB of disk space
 

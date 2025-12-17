@@ -190,6 +190,14 @@ To maintain code quality and readability:
 
 ### Performance Considerations
 - **Use Polars over Pandas** for new code when handling large datasets
+- **Use streaming operations** for large file merges:
+  - Prefer `scan_parquet()` + `sink_parquet()` over `read_parquet()` + `write_parquet()`
+  - This allows processing datasets larger than available RAM
+  - Example: See `12_merge_batches.py` for streaming merge implementation
+- **Data pipeline best practices**:
+  - Use stratified splitting (`15_split_and_merge.py`) to maintain regime distribution
+  - Always validate on a held-out validation set before touching test data
+  - Consider OOD testing (`16_merge_ood.py`) for robustness evaluation
 - **Avoid global variables** except for configuration constants
 - **Profile before optimizing**: Use `cProfile` or `line_profiler` to identify bottlenecks
 

@@ -123,17 +123,29 @@ ls -lh data/training_batches/
 ```
 *Success: You should see files like `sim_day_1000_STANDARD.parquet`, `sim_day_1001_VOLATILE.parquet`, etc.*
 
-## Phase 5: Mass Production (Advanced)
+## Phase 5: Data Pipeline (After Simulation)
 
-For generating large datasets (e.g., 20,000 days), use the parallel launcher script which utilizes multiple CPU cores.
+Once you have generated simulation data, process it into train/val/test sets:
 
 ```bash
-# Example: Generate 100 days using 16 cores
-python 14_launch_parallel.py --total-days 100 --cores 16
-
-# Example: Run for a maximum of 4 hours (useful for strict cloud budgets)
-python 14_launch_parallel.py --total-days 5000 --cores 32 --duration 4.0
+# Split batch files by regime and merge each set
+python 15_split_and_merge.py
 ```
+
+**This creates:**
+- `data/TRAIN.parquet` (70% of data) - For model training
+- `data/VAL.parquet` (15% of data) - For hyperparameter tuning
+- `data/TEST.parquet` (15% of data) - For final evaluation
+
+**Optional: Generate OOD (Out-of-Distribution) Test Data**
+```bash
+# Generate fresh data with different seeds for robustness testing
+python 14_launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
+
+# After completion, merge OOD data
+python 16_merge_ood.py
+```
+This creates `data/TEST_OOD.parquet` for testing model generalization on completely unseen trajectories.
 
 ---
 **Folder Structure Reference**
@@ -143,13 +155,16 @@ alpha-lab-core/
 ├── .venv/                   # Active Environment
 ├── data/                    # (Ignored by Git)
 │   ├── training_batches/    # Raw Daily Simulation Files
-│   └── TRAIN_FULL.parquet   # Merged Dataset
+│   ├── TRAIN.parquet        # Training Set (70%)
+│   ├── VAL.parquet          # Validation Set (15%)
+│   ├── TEST.parquet         # Test Set (15%)
+│   └── TEST_OOD.parquet     # OOD Test (Optional)
 ├── libs/
 │   └── abides/              # The JPMC Source Code
-├── 1_fyers_harvester.py     # Real Data Collector
-├── 11_mass_production.py    # Basic Simulator
 ├── 13_regime_factory.py     # Advanced Regime Simulator
 ├── 14_launch_parallel.py    # Parallel Execution Launcher
+├── 15_split_and_merge.py    # Train/Val/Test Splitter
+├── 16_merge_ood.py          # OOD Test Data Merger
 ├── requirements.txt         # Dependency File
 └── INSTALL_GUIDE.md         # This Guide
 ```
