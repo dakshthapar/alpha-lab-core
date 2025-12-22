@@ -96,7 +96,7 @@ We welcome code contributions! Here's how to get started:
 1. **Fork the Repository** on GitHub
 2. **Clone Your Fork**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/alpha-lab-core.git
+   git clone https://github.com/dakshthapar/alpha-lab-core.git
    cd alpha-lab-core
    ```
 3. **Create a Feature Branch**:

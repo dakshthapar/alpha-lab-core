@@ -94,7 +94,7 @@ Alpha Lab Core is organized into **4 development phases**:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/alpha-lab-core.git
+git clone https://github.com/dakshthapar/alpha-lab-core.git
 cd alpha-lab-core
 
 # 2. Create virtual environment
@@ -348,8 +348,8 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 
 ## 📧 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/alpha-lab-core/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/alpha-lab-core/discussions)
+- **Issues**: [GitHub Issues](https://github.com/dakshthapar/alpha-lab-core/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dakshthapar/alpha-lab-core/discussions)
 
 ---
 

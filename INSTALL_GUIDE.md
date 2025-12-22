@@ -45,7 +45,7 @@ uv --version
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/alpha-lab-core.git
+   git clone https://github.com/dakshthapar/alpha-lab-core.git
    cd alpha-lab-core
    ```
 
