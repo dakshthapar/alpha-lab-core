@@ -31,7 +31,7 @@ SYMBOLS = [
     "NSE:RELIANCE-EQ",
     "NSE:ADANIENT-EQ",
     "NSE:INFY-EQ",
-    "NSE:TATAMOTORS-EQ" 
+    "NSE:SBIN-EQ"  # Swapped TATAMOTORS for SBIN to ensure stability
 ]
 
 # --- TIME CONSTANTS (IST) ---
@@ -121,28 +121,29 @@ def main():
                         
                         row = {
                             "timestamp": timestamp_str,
-                            "symbol": sym, # <--- FIX: Use 'sym' variable directly
+                            "symbol": sym,
                             "ltp": stock_data.get("ltp", 0),
                             "total_buy_qty": stock_data.get("totalbuyqty", 0),
                             "total_sell_qty": stock_data.get("totalsellqty", 0)
                         }
                         
-                        # Use .get() to avoid crashes if bids/ask are empty
                         bids = stock_data.get("bids", [])
-                        asks = stock_data.get("ask", []) # Fyers V3 uses "ask" (singular) usually
+                        asks = stock_data.get("ask", [])
                         
+                        # --- CRASH FIX: Use .get('volume') instead of ['qty'] ---
                         for i in range(5):
                             if i < len(bids):
-                                row[f"bid_px_{i+1}"] = bids[i]["price"]
-                                row[f"bid_qty_{i+1}"] = bids[i]["qty"]
+                                row[f"bid_px_{i+1}"] = bids[i].get("price", 0)
+                                # Fyers V3 uses 'volume' for quantity in depth
+                                row[f"bid_qty_{i+1}"] = bids[i].get("volume", bids[i].get("qty", 0))
                             else:
                                 row[f"bid_px_{i+1}"] = 0
                                 row[f"bid_qty_{i+1}"] = 0
                                 
                         for i in range(5):
                             if i < len(asks):
-                                row[f"ask_px_{i+1}"] = asks[i]["price"]
-                                row[f"ask_qty_{i+1}"] = asks[i]["qty"]
+                                row[f"ask_px_{i+1}"] = asks[i].get("price", 0)
+                                row[f"ask_qty_{i+1}"] = asks[i].get("volume", asks[i].get("qty", 0))
                             else:
                                 row[f"ask_px_{i+1}"] = 0
                                 row[f"ask_qty_{i+1}"] = 0
