@@ -5,6 +5,8 @@
 credentials.json
 config.json
 fyers_credentials.txt
+access_token.txt
+daily_token.txt
 
 # --- Data & Logs ---
 data/
