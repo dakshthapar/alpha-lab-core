@@ -7,7 +7,7 @@
 
 **Alpha Lab Core** is a high-fidelity market simulation and data harvesting pipeline designed for training High Frequency Trading (HFT) and Reinforcement Learning (RL) agents.
 
-It leverages [ABIDES](https://github.com/jpmorganchase/abides) (Agent-Based Interactive Discrete Event Simulator) to generate realistic synthetic Limit Order Book (LOB) data across multiple market regimes (Standard, Volatile, Momentum).
+It leverages [ABIDES](https://github.com/jpmorganchase/abides-jpmc-public) (Agent-Based Interactive Discrete Event Simulator) to generate realistic synthetic Limit Order Book (LOB) data across multiple market regimes (Standard, Volatile, Momentum).
 
 ---
 
@@ -340,7 +340,7 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 
 ## 🙏 Acknowledgments
 
-- **JPMorgan Chase & Co.** for open-sourcing [ABIDES](https://github.com/jpmorganchase/abides)
+- **JPMorgan Chase & Co.** for open-sourcing [ABIDES](https://github.com/jpmorganchase/abides-jpmc-public)
 - **Fyers Securities** for providing market data API access
 - The quantitative finance and machine learning research community
 

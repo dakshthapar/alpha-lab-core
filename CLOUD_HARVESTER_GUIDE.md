@@ -168,7 +168,7 @@ echo "YOUR_TOKEN_STRING" | ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "cat > /home/
 
 **Example**:
 ```bash
-echo "eyJ0eXAiOiJKV1QiLCJhbGc..." | ssh -i alpha-key.pem ubuntu@13.201.45.67 "cat > /home/ubuntu/alpha-lab-core/access_token.txt"
+echo "eyJ0eXAiOiJKV1QiLCJhbGc..." | ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "cat > /home/ubuntu/alpha-lab-core/access_token.txt"
 ```
 
 **Verification** (optional):
@@ -384,7 +384,7 @@ scp -i alpha-key.pem -r ubuntu@YOUR_AWS_IP:/home/ubuntu/alpha-lab-core/harvested
 
 **Example**:
 ```bash
-scp -i alpha-key.pem -r ubuntu@13.201.45.67:/home/ubuntu/alpha-lab-core/harvested_data/ ~/my_training_data/
+scp -i alpha-key.pem -r ubuntu@YOUR_AWS_IP:/home/ubuntu/alpha-lab-core/harvested_data/ ~/my_training_data/
 ```
 
 ### 4.2 Download Specific Date Range
