@@ -6,6 +6,7 @@ pandas>=2.0.0
 numpy>=1.24.0
 tqdm>=4.66.0
 pyarrow>=14.0.0
+tabulate>=0.9.0
 
 # --- LIVE TRADING & HARVESTING ---
 fyers-apiv3>=3.0.0

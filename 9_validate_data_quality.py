@@ -11,8 +11,9 @@ This script assesses the synthetic market data against ML-readiness criteria:
 7. Overall ML Readiness Score
 
 Usage:
-    python 9_validate_data_quality.py
-    python 9_validate_data_quality.py --input data/TRAIN_FULL.parquet
+    python 9_validate_data_quality.py                          # Validates TRAIN.parquet (default)
+    python 9_validate_data_quality.py --input data/VAL.parquet # Validate specific file
+    python 9_validate_data_quality.py --input data/TEST_OOD.parquet
     python 9_validate_data_quality.py --batch-dir data/training_batches
 """
 
@@ -586,8 +587,8 @@ def main():
     parser.add_argument(
         "--input",
         type=str,
-        default="data/TRAIN_FULL.parquet",
-        help="Input parquet file (merged dataset)",
+        default="data/TRAIN.parquet",
+        help="Input parquet file (TRAIN.parquet, VAL.parquet, TEST.parquet, or TEST_OOD.parquet)",
     )
     parser.add_argument(
         "--batch-dir",
