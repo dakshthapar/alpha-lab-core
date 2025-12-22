@@ -1,0 +1,4 @@
+[submodule "libs/abides"]
+	path = libs/abides
+	url = https://github.com/jpmorganchase/abides-jpmc-public
+	ignore = all
