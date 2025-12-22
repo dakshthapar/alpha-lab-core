@@ -23,6 +23,33 @@ It leverages [ABIDES](https://github.com/jpmorganchase/abides) (Agent-Based Inte
 
 ---
 
+## 🚀 Project Pipeline
+
+Alpha Lab Core is organized into **4 development phases**:
+
+**Phase 1: Data Collection** ✅ **(Current)**
+- Synthetic market simulation (ABIDES-based)
+- Real market data harvesting (Fyers API)
+- Data processing and validation
+- Located in: `data_collection/`, `validation/`
+
+**Phase 2: Benchmarking** 🚧 **(Future)**
+- Baseline strategy performance
+- Backtesting framework
+- Located in: `benchmarking/`
+
+**Phase 3: ML Models** 🚧 **(Future)**
+- LOB prediction models (LSTM, Transformers)
+- RL agent training
+- Located in: `models/`
+
+**Phase 4: Trading System** 🚧 **(Future)**
+- Live strategy execution
+- Risk management
+- Located in: `trading/`
+
+---
+
 ## ✨ Features
 
 ### 🎯 Multi-Regime Simulation
@@ -45,6 +72,7 @@ It leverages [ABIDES](https://github.com/jpmorganchase/abides) (Agent-Based Inte
 
 ### 📊 Real Market Integration
 - Fyers API integration for harvesting real-time Indian market data
+- **24/7 AWS cloud deployment** - Continuous data collection (see [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md))
 - Data validation and calibration against live order books
 - Side-by-side comparison tools for synthetic vs real data
 
@@ -62,6 +90,8 @@ It leverages [ABIDES](https://github.com/jpmorganchase/abides) (Agent-Based Inte
 
 **Full installation instructions available in [INSTALL_GUIDE.md](INSTALL_GUIDE.md)**
 
+**For 24/7 cloud data harvesting, see [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md)**
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/YOUR_USERNAME/alpha-lab-core.git
@@ -78,7 +108,7 @@ pip install uv
 # For GPU (CUDA 12.1):
 uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match
 # OR for CPU only:
-uv pip install -r requirements-cpu.txt
+uv pip install -r requirements.txt (CPU)
 
 # 5. Install ABIDES from source
 cd libs/abides/abides-core && uv pip install -e .
@@ -93,23 +123,23 @@ cd ../../../
 ### 1️⃣ Generate Test Data (3 Days)
 Verify your setup with a quick test:
 ```bash
-python 13_regime_factory.py --test-mode
+python data_collection/simulation/regime_factory.py --test-mode
 ```
 
 ### 2️⃣ Large-Scale Simulation
 Generate thousands of trading days using parallel processing:
 ```bash
 # Example: 5000 days using 16 cores
-python 14_launch_parallel.py --total-days 5000 --cores 16
+python data_collection/simulation/launch_parallel.py --total-days 5000 --cores 16
 
 # With time limit (useful for cloud budgets):
-python 14_launch_parallel.py --total-days 10000 --cores 32 --duration 4.0
+python data_collection/simulation/launch_parallel.py --total-days 10000 --cores 32 --duration 4.0
 ```
 
 ### 3️⃣ Split and Merge Data
 Split batch files by regime into train/val/test, then merge each:
 ```bash
-python 15_split_and_merge.py
+python data_collection/processing/split_and_merge.py
 ```
 **Output**: `TRAIN.parquet` (70%), `VAL.parquet` (15%), `TEST.parquet` (15%)
 
@@ -119,17 +149,17 @@ python 15_split_and_merge.py
 For robustness testing, generate fresh data with different random seeds:
 ```bash
 # Generate 500 new days with seed offset
-python 14_launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
+python data_collection/simulation/launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
 
 # Merge OOD data
-python 16_merge_ood.py
+python data_collection/processing/merge_ood.py
 ```
 **Output**: `TEST_OOD.parquet` - tests model on completely unseen trajectories
 
 ### 5️⃣ Validate Data Quality
 Verify spread, volatility, and LOB statistics:
 ```bash
-python 9_validate_data_quality.py
+python validation/validate_data_quality.py
 ```
 
 ---
@@ -151,40 +181,51 @@ alpha-lab-core/
 │   ├── TEST.parquet             # Test set (15%)
 │   └── TEST_OOD.parquet         # Out-of-distribution test (optional)
 │
-├── 🔧 Simulation Scripts
-│   ├── 13_regime_factory.py     # ⭐ Main simulation engine with regime support
-│   ├── 14_launch_parallel.py    # ⭐ Parallel execution orchestrator
-│   ├── 11_mass_production.py    # Legacy basic simulator
-│   └── 3_abides_factory.py      # ABIDES configuration builder
+├── 📁 data_collection/                     # Phase 1: Data Generation & Harvesting
+│   ├── simulation/
+│   │   ├── regime_factory.py               # ⭐ Multi-regime market simulator
+│   │   └── launch_parallel.py              # ⭐ Parallel batch orchestrator
+│   ├── harvesting/
+│   │   ├── smart_harvester.py              # Real-time market data collector (24/7)
+│   │   └── get_token.py                    # Fyers authentication
+│   └── processing/
+│       ├── split_and_merge.py              # ⭐ Train/val/test splitter
+│       ├── merge_ood.py                    # OOD test data merger
+│       └── process_depth.py                # Depth data processor
 │
-├── 🔍 Analysis & Validation
-│   ├── 9_validate_data_quality.py  # Comprehensive quality metrics
-│   ├── 8_verify_density.py         # LOB density statistics
-│   ├── 7_sanity_check.py           # Basic data verification
-│   ├── 10_reconstruct_lob.py       # LOB reconstruction tools
-│   ├── 5_inspect_depth.py          # Order book depth viewer
-│   └── 4_inspect_abides.py         # ABIDES output inspector
+├── 📁 validation/                          # Data Quality Assurance
+│   ├── validate_data_quality.py            # Comprehensive quality metrics
+│   ├── verify_density.py                   # LOB density statistics
+│   ├── sanity_check.py                     # Basic verification
+│   └── inspection/
+│       ├── reconstruct_lob.py              # LOB reconstruction tools
+│       ├── inspect_depth.py                # Order book depth viewer
+│       └── inspect_abides.py               # ABIDES output inspector
 │
-├── 📡 Data Harvesting
-│   ├── 1_fyers_harvester.py     # Real-time Indian market data collector
-│   └── 0_simulate_fyers.py      # Fyers API simulator (testing)
+├── 📁 benchmarking/                        # Phase 2: Performance Baselines (Future)
+│   └── README.md
 │
-├── 🛠️ Data Processing
-│   ├── 15_split_and_merge.py    # ⭐ Stratified train/val/test split + merge
-│   ├── 16_merge_ood.py          # OOD test data merger
-│   ├── 12_merge_batches.py      # (Legacy) Single file merger
-│   ├── 6_process_depth.py       # Depth data processor
-│   └── debug_*.py               # Debugging utilities
+├── 📁 models/                              # Phase 3: ML Models (Future) 
+│   ├── training/
+│   ├── inference/
+│   └── architectures/
+│
+├── 📁 trading/                             # Phase 4: Live Trading System (Future)
+│   ├── strategies/
+│   ├── execution/
+│   └── risk_management/
+│
 │
 ├── 📄 Documentation
 │   ├── README.md                # ⭐ You are here
 │   ├── INSTALL_GUIDE.md         # Detailed installation instructions
+│   ├── CLOUD_HARVESTER_GUIDE.md # ⭐ AWS deployment & 24/7 data collection
 │   ├── CONTRIBUTING.md          # Contribution guidelines
 │   └── LICENSE                  # Apache 2.0 License
 │
 └── 📦 Dependencies
     ├── requirements.txt         # Base dependencies
-    ├── requirements-cpu.txt     # CPU-only PyTorch
+    ├── requirements.txt (CPU)     # CPU-only PyTorch
     └── requirements-gpu.txt     # CUDA 12.1 PyTorch
 ```
 

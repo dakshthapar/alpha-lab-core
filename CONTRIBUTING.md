@@ -49,7 +49,7 @@ Title: regime_factory.py fails with KeyError when processing VOLATILE regime
 Environment: Ubuntu 22.04, Python 3.10, CPU-only
 
 Steps to Reproduce:
-1. Run `python 13_regime_factory.py --test-mode`
+1. Run `python data_collection/simulation/regime_factory.py --test-mode`
 2. Wait for VOLATILE regime simulation to start
 
 Expected: Simulation completes successfully
@@ -193,11 +193,11 @@ To maintain code quality and readability:
 - **Use streaming operations** for large file merges:
   - Prefer `scan_parquet()` + `sink_parquet()` over `read_parquet()` + `write_parquet()`
   - This allows processing datasets larger than available RAM
-  - Example: See `12_merge_batches.py` for streaming merge implementation
+  - Example: See `data_collection/processing/merge_batches.py` for streaming merge implementation
 - **Data pipeline best practices**:
-  - Use stratified splitting (`15_split_and_merge.py`) to maintain regime distribution
+  - Use stratified splitting (`data_collection/processing/split_and_merge.py`) to maintain regime distribution
   - Always validate on a held-out validation set before touching test data
-  - Consider OOD testing (`16_merge_ood.py`) for robustness evaluation
+  - Consider OOD testing (`data_collection/processing/merge_ood.py`) for robustness evaluation
 - **Avoid global variables** except for configuration constants
 - **Profile before optimizing**: Use `cProfile` or `line_profiler` to identify bottlenecks
 

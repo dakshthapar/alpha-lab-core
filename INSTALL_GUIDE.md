@@ -2,6 +2,9 @@
 
 This guide covers the setup process for the Alpha Lab Core market simulation environment.
 
+> [!NOTE]
+> **Looking for cloud deployment?** For 24/7 AWS data harvesting, see [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md).
+
 ## Phase 1: System Preparation
 
 ### Option A: Arch Linux (Local Development)
@@ -74,7 +77,7 @@ uv --version
    **Option B: For CPU Only**
    *Use this for cloud servers without GPU or basic laptops.*
    ```bash
-   uv pip install -r requirements-cpu.txt
+   uv pip install -r requirements.txt (CPU)
    ```
 
    **Verify CPU Setup:**
@@ -113,7 +116,7 @@ To verify that the Simulation Factory and detailed market regimes are working co
 **Run the Factory (Test Mode):**
 This command simulates 3 days of market data (one for each market regime: Standard, Volatile, Momentum).
 ```bash
-python 13_regime_factory.py --test-mode
+python data_collection/simulation/regime_factory.py --test-mode
 ```
 
 **Check the Data:**
@@ -129,7 +132,7 @@ Once you have generated simulation data, process it into train/val/test sets:
 
 ```bash
 # Split batch files by regime and merge each set
-python 15_split_and_merge.py
+python data_collection/processing/split_and_merge.py
 ```
 
 **This creates:**
@@ -140,10 +143,10 @@ python 15_split_and_merge.py
 **Optional: Generate OOD (Out-of-Distribution) Test Data**
 ```bash
 # Generate fresh data with different seeds for robustness testing
-python 14_launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
+python data_collection/simulation/launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
 
 # After completion, merge OOD data
-python 16_merge_ood.py
+python data_collection/processing/merge_ood.py
 ```
 This creates `data/TEST_OOD.parquet` for testing model generalization on completely unseen trajectories.
 
@@ -161,10 +164,15 @@ alpha-lab-core/
 │   └── TEST_OOD.parquet     # OOD Test (Optional)
 ├── libs/
 │   └── abides/              # The JPMC Source Code
-├── 13_regime_factory.py     # Advanced Regime Simulator
-├── 14_launch_parallel.py    # Parallel Execution Launcher
-├── 15_split_and_merge.py    # Train/Val/Test Splitter
-├── 16_merge_ood.py          # OOD Test Data Merger
+├── data_collection/simulation/regime_factory.py     # Advanced Regime Simulator
+├── data_collection/simulation/launch_parallel.py    # Parallel Execution Launcher
+├── data_collection/processing/split_and_merge.py    # Train/Val/Test Splitter
+├── data_collection/processing/merge_ood.py          # OOD Test Data Merger
+├── data_collection/harvesting/smart_harvester.py       # Real-time market data collector
+├── data_collection/harvesting/get_token.py             # Fyers token generator
+├── harvested_data/          # Real market depth data (created by harvester)
 ├── requirements.txt         # Dependency File
-└── INSTALL_GUIDE.md         # This Guide
+├── INSTALL_GUIDE.md         # This Guide
+└── CLOUD_HARVESTER_GUIDE.md # AWS Deployment Guide
 ```
+
