@@ -12,8 +12,6 @@ load_dotenv()
 
 # Fetch Credentials from Environment
 CLIENT_ID = os.getenv("FYERS_CLIENT_ID")
-# We don't need SECRET_KEY or TOTP here if we are using the 'access_token.txt' method
-# but it's good practice to have them available if you upgrade later.
 
 # Configuration
 DATA_DIR = "harvested_data"
@@ -75,8 +73,6 @@ def main():
         os.makedirs(DATA_DIR)
 
     # 3. Authentication (Read Daily Token from File)
-    # Note: We still use a text file for the token because it changes daily,
-    # whereas .env is for static keys that never change.
     try:
         with open("access_token.txt", "r") as f:
             access_token = f.read().strip()
@@ -108,14 +104,18 @@ def main():
                 break
             
             # FETCH DATA
-            try:
-                response = fyers.depth(symbols=SYMBOLS)
-                
-                if "d" in response:
-                    data_batch = []
-                    timestamp_str = now.isoformat()
+            data_batch = []
+            timestamp_str = now.isoformat()
+
+            for sym in SYMBOLS:
+                try:
+                    # FIX: Fetch depth for one symbol at a time using 'data' parameter
+                    response = fyers.depth(data={"symbol": sym, "ohlcv_flag": 1})
                     
-                    for stock_data in response["d"].values():
+                    if "d" in response and response["d"]:
+                        # API returns a dictionary where key is the symbol
+                        stock_data = response["d"][sym]
+                        
                         row = {
                             "timestamp": timestamp_str,
                             "symbol": stock_data["symbol"],
@@ -123,32 +123,37 @@ def main():
                             "total_buy_qty": stock_data["totalbuyqty"],
                             "total_sell_qty": stock_data["totalsellqty"]
                         }
-                        # Capture Level 1-5
+                        
+                        # Capture Top 5 Bids
                         for i, bid in enumerate(stock_data["bids"][:5]):
                             row[f"bid_px_{i+1}"] = bid["price"]
                             row[f"bid_qty_{i+1}"] = bid["qty"]
+                        
+                        # Capture Top 5 Asks
                         for i, ask in enumerate(stock_data["ask"][:5]):
                             row[f"ask_px_{i+1}"] = ask["price"]
                             row[f"ask_qty_{i+1}"] = ask["qty"]
-                        
+                            
                         data_batch.append(row)
-                    
-                    # SAVE IMMEDIATELY (Append Mode)
-                    df = pd.DataFrame(data_batch)
-                    today_str = now.strftime("%Y-%m-%d")
-                    filename = f"{DATA_DIR}/market_depth_{today_str}.csv"
-                    
-                    header = not os.path.exists(filename)
-                    df.to_csv(filename, mode='a', header=header, index=False)
-                    
-                    print(f"[{now.time()}] Snapshot saved for {len(data_batch)} symbols.")
-                else:
-                    print(f"Warning: API returned empty data: {response}")
+                        
+                        # Tiny sleep to be polite to the API (avoid Rate Limits)
+                        time.sleep(0.05) 
+                        
+                except Exception as e:
+                    print(f"Error fetching {sym}: {e}")
 
-            except Exception as e:
-                print(f"API Error: {e}")
+            # SAVE BATCH
+            if data_batch:
+                df = pd.DataFrame(data_batch)
+                today_str = now.strftime("%Y-%m-%d")
+                filename = f"{DATA_DIR}/market_depth_{today_str}.csv"
+                
+                header = not os.path.exists(filename)
+                df.to_csv(filename, mode='a', header=header, index=False)
+                
+                print(f"[{now.time()}] Snapshot saved for {len(data_batch)} symbols.")
             
-            # Sleep 5 Seconds (Rate Limit Safe)
+            # Sleep 5 Seconds (Total loop time will be approx 5.5s)
             time.sleep(5)
 
     except KeyboardInterrupt:
