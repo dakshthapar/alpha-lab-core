@@ -4,9 +4,19 @@ import datetime
 import pytz
 import pandas as pd
 from fyers_apiv3 import fyersModel
+from dotenv import load_dotenv
 
-# --- USER CONFIGURATION (UPDATE THESE) ---
-CLIENT_ID = "YOUR_CLIENT_ID"  # Format: "XS.....-100"
+# --- SECURITY SETUP ---
+# Load environment variables from .env file
+load_dotenv()
+
+# Fetch Credentials from Environment
+CLIENT_ID = os.getenv("FYERS_CLIENT_ID")
+# We don't need SECRET_KEY or TOTP here if we are using the 'access_token.txt' method
+# but it's good practice to have them available if you upgrade later.
+
+# Configuration
+DATA_DIR = "harvested_data"
 SYMBOLS = [
     "NSE:HDFCBANK-EQ",
     "NSE:RELIANCE-EQ",
@@ -14,7 +24,6 @@ SYMBOLS = [
     "NSE:INFY-EQ",
     "NSE:TATAMOTORS-EQ"
 ]
-DATA_DIR = "harvested_data"
 
 # --- TIME CONSTANTS (IST) ---
 IST = pytz.timezone('Asia/Kolkata')
@@ -56,11 +65,18 @@ def wait_for_market_open():
     return True
 
 def main():
-    # 1. Setup Directories
+    # 1. Verification
+    if not CLIENT_ID:
+        print("CRITICAL ERROR: FYERS_CLIENT_ID not found in .env file.")
+        return
+
+    # 2. Setup Directories
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
-    # 2. Authentication (Read Token from File)
+    # 3. Authentication (Read Daily Token from File)
+    # Note: We still use a text file for the token because it changes daily,
+    # whereas .env is for static keys that never change.
     try:
         with open("access_token.txt", "r") as f:
             access_token = f.read().strip()
@@ -68,20 +84,20 @@ def main():
         print("CRITICAL ERROR: 'access_token.txt' not found. Please upload the token file.")
         return
 
-    # 3. Initialize Fyers
+    # 4. Initialize Fyers
     try:
         fyers = fyersModel.FyersModel(client_id=CLIENT_ID, is_async=False, token=access_token, log_path="")
     except Exception as e:
         print(f"Initialization Failed: {e}")
         return
 
-    # 4. Wait for Open
+    # 5. Wait for Open
     if not wait_for_market_open():
         return
 
     print("--- HARVESTER ACTIVE ---")
     
-    # 5. Collection Loop
+    # 6. Collection Loop
     try:
         while True:
             now = get_ist_time()
@@ -118,7 +134,6 @@ def main():
                         data_batch.append(row)
                     
                     # SAVE IMMEDIATELY (Append Mode)
-                    # This ensures if the script crashes, you don't lose previous data
                     df = pd.DataFrame(data_batch)
                     today_str = now.strftime("%Y-%m-%d")
                     filename = f"{DATA_DIR}/market_depth_{today_str}.csv"
