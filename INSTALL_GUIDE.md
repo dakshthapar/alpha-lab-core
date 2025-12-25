@@ -49,14 +49,21 @@ uv --version
    cd alpha-lab-core
    ```
 
-2. **Create Virtual Environment**
+2. **Initialize ABIDES Submodule**
+   The ABIDES library is included as a git submodule and must be initialized:
+   ```bash
+   git submodule update --init --recursive
+   ```
+   This will download the full ABIDES source code into `libs/abides/`.
+
+3. **Create Virtual Environment**
    We use `uv` for significantly faster dependency resolution.
    ```bash
    uv venv .venv --python 3.10
    source .venv/bin/activate
    ```
 
-3. **Install Dependencies**
+4. **Install Dependencies**
    Choose the appropriate command for your hardware:
 
    **Option A: For NVIDIA GPU (CUDA 12.1)**

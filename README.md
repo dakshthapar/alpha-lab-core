@@ -97,20 +97,23 @@ Alpha Lab Core is organized into **4 development phases**:
 git clone https://github.com/dakshthapar/alpha-lab-core.git
 cd alpha-lab-core
 
-# 2. Create virtual environment
+# 2. Initialize ABIDES submodule
+git submodule update --init --recursive
+
+# 3. Create virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 3. Install uv (fast package installer)
+# 4. Install uv (fast package installer)
 pip install uv
 
-# 4. Install dependencies
+# 5. Install dependencies
 # For GPU (CUDA 12.1):
 uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match
 # OR for CPU only:
 uv pip install -r requirements.txt (CPU)
 
-# 5. Install ABIDES from source
+# 6. Install ABIDES from source
 cd libs/abides/abides-core && uv pip install -e .
 cd ../abides-markets && uv pip install -e .
 cd ../../../
