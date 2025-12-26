@@ -76,6 +76,11 @@ python3 -c "import fyers_apiv3; print('✅ Fyers API installed')"
 > [!CAUTION]
 > The `.env` file is NOT in GitHub for security reasons. You must create it manually.
 
+> [!IMPORTANT]
+> **Fyers Terminology**: In the Fyers developer portal, your **App ID** is what we use as `FYERS_CLIENT_ID` in the .env file.
+
+#### On AWS Server:
+
 Create the environment file:
 
 ```bash
@@ -86,7 +91,8 @@ Paste your Fyers credentials:
 
 ```plaintext
 FYERS_CLIENT_ID=XS12345-100
-# Note: Secret key is only needed on your laptop for token generation
+# Replace XS12345-100 with your actual Fyers App ID
+# NOTE: Secret key is NOT needed on the server for security reasons
 ```
 
 **Save and Exit**:
@@ -98,23 +104,97 @@ FYERS_CLIENT_ID=XS12345-100
 cat .env  # Should show your client ID
 ```
 
-### 1.4 Initial Test Run
+#### On Your Laptop:
 
-Before deploying 24/7, test the harvester manually:
+You'll also need to create a `.env` file on your **laptop** (in the `alpha-lab-core` folder) with BOTH credentials:
+
+```plaintext
+FYERS_CLIENT_ID=XS12345-100
+FYERS_SECRET_KEY=ABCD1234WXYZ
+# Both values are from your Fyers App Settings page
+# App ID → FYERS_CLIENT_ID
+# Secret Key → FYERS_SECRET_KEY
+```
+
+> [!NOTE]
+> The secret key is only needed on your laptop for generating daily access tokens. Never upload it to the server.
+
+### 1.4 Generate Your First Access Token
+
+> [!WARNING]
+> **You cannot run the harvester without a valid access token!** This is a one-time prerequisite for initial setup.
+
+Before you can test the harvester on the server, you must generate an access token using your **laptop**:
+
+#### Step 1: Generate Token on Laptop
 
 ```bash
-# Ensure virtual environment is active
+# On your laptop (not server), navigate to the project folder
+cd ~/path/to/alpha-lab-core
+
+# Ensure .env file exists with CLIENT_ID and SECRET_KEY (see section 1.3)
+
+# Run token generator
+python3 data_collection/harvesting/get_token.py
+```
+
+**What happens**:
+1. A browser opens with Fyers login
+2. Log in and authorize the app
+3. Copy the full URL from the blank page
+4. Paste it into the terminal
+5. You'll receive an access token
+
+**Output**:
+```
+SUCCESS! HERE IS YOUR ACCESS TOKEN:
+------------------------------------------------------------
+eyJ0eXAiOiJKV1QiLCJhbGc...
+------------------------------------------------------------
+Saved to daily_token.txt (DO NOT COMMIT THIS FILE)
+```
+
+#### Step 2: Upload Token to Server
+
+Now upload the token to your AWS server:
+
+```bash
+# From your laptop - replace YOUR_TOKEN with the actual token string
+echo "YOUR_TOKEN_STRING" | ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "cat > /home/ubuntu/alpha-lab-core/access_token.txt"
+```
+
+**Verify upload**:
+```bash
+ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "cat /home/ubuntu/alpha-lab-core/access_token.txt"
+# Should display your token
+```
+
+### 1.5 Initial Test Run
+
+Now that you have a valid token on the server, test the harvester:
+
+```bash
+# SSH into server
+ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP
+
+# Navigate to project
+cd alpha-lab-core
+
+# Activate virtual environment
 source .venv/bin/activate
 
 # Run in foreground (for testing)
 python3 data_collection/harvesting/smart_harvester.py --debug
 ```
 
-You should see:
+**Expected output**:
 ```
 [12:21:30] [INFO] --- HARVESTER ACTIVE ---
 [12:21:35] [INFO] Snapshot saved for 5 stocks.
 ```
+
+> [!TIP]
+> If you see "CRITICAL ERROR: 'access_token.txt' not found", go back to section 1.4 and ensure you uploaded the token.
 
 Stop with `Ctrl+C` once verified.
 
@@ -433,8 +513,8 @@ rm -rf harvested_data/*.csv
 |------|----------|---------|
 | `data_collection/harvesting/smart_harvester.py` | AWS & Laptop | Main harvester script. Runs 09:15-15:30 IST. |
 | `data_collection/harvesting/get_token.py` | **Laptop Only** | Generates daily Fyers access token. |
-| `.env` | AWS & Laptop | Stores `FYERS_CLIENT_ID` (not in Git). |
-| `access_token.txt` | **AWS Only** | Stores temporary daily token (expires nightly). |
+| `.env` | AWS & Laptop | **AWS**: Contains only `FYERS_CLIENT_ID` (Fyers App ID). **Laptop**: Contains both `FYERS_CLIENT_ID` and `FYERS_SECRET_KEY`. |
+| `access_token.txt` | **AWS Only** | Stores temporary daily token (expires nightly). Generated via `get_token.py` on laptop. |
 | `harvester.log` | **AWS Only** | Log file to monitor harvester status. |
 | `harvested_data/*.csv` | AWS | Collected market depth data by date. |
 | `alpha-key.pem` | **Laptop Only** | AWS SSH key (NEVER upload to server or Git). |
