@@ -33,7 +33,7 @@
 - **HTTP/HTTPS (Ports 80/443)**: BLOCK (not needed)
 
 **Key Pair**:
-- Download and save `alpha-key.pem` securely on your laptop
+- Download and save `alpha-key.pem` securely on your local machine
 - Set permissions: `chmod 400 alpha-key.pem`
 
 ### 1.2 Server Initialization
@@ -104,9 +104,9 @@ FYERS_CLIENT_ID=XS12345-100
 cat .env  # Should show your client ID
 ```
 
-#### On Your Laptop:
+#### On Your Local Machine:
 
-You'll also need to create a `.env` file on your **laptop** (in the `alpha-lab-core` folder) with BOTH credentials:
+You'll also need to create a `.env` file on your **local machine** (in the `alpha-lab-core` folder) with BOTH credentials:
 
 ```plaintext
 FYERS_CLIENT_ID=XS12345-100
@@ -117,19 +117,19 @@ FYERS_SECRET_KEY=ABCD1234WXYZ
 ```
 
 > [!NOTE]
-> The secret key is only needed on your laptop for generating daily access tokens. Never upload it to the server.
+> The secret key is only needed on your local machine for generating daily access tokens. Never upload it to the server.
 
 ### 1.4 Generate Your First Access Token
 
 > [!WARNING]
 > **You cannot run the harvester without a valid access token!** This is a one-time prerequisite for initial setup.
 
-Before you can test the harvester on the server, you must generate an access token using your **laptop**:
+Before you can test the harvester on the server, you must generate an access token using your **local machine**:
 
-#### Step 1: Generate Token on Laptop
+#### Step 1: Generate Token on Local Machine
 
 ```bash
-# On your laptop (not server), navigate to the project folder
+# On your local machine (not server), navigate to the project folder
 cd ~/path/to/alpha-lab-core
 
 # Ensure .env file exists with CLIENT_ID and SECRET_KEY (see section 1.3)
@@ -159,7 +159,7 @@ Saved to daily_token.txt (DO NOT COMMIT THIS FILE)
 Now upload the token to your AWS server:
 
 ```bash
-# From your laptop - replace YOUR_TOKEN with the actual token string
+# From your local machine - replace YOUR_TOKEN with the actual token string
 echo "YOUR_TOKEN_STRING" | ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "cat > /home/ubuntu/alpha-lab-core/access_token.txt"
 ```
 
@@ -205,11 +205,11 @@ Stop with `Ctrl+C` once verified.
 > [!WARNING]
 > Fyers Access Tokens expire every night at midnight. You **must** regenerate and upload a new token before market open (09:15 IST).
 
-### 2.1 Generate Token (On Your Laptop)
+### 2.1 Generate Token (On Your Local Machine)
 
 **Time Required**: 2-3 minutes
 
-Open your terminal in the `alpha-lab-core` folder on your **laptop** (not server):
+Open your terminal in the `alpha-lab-core` folder on your **local machine** (not server):
 
 ```bash
 cd ~/path/to/alpha-lab-core
@@ -239,7 +239,7 @@ You have **two methods** to upload the token:
 
 #### Method A: The "Speedster" ⚡ (Recommended)
 
-Run this **single command** from your laptop terminal. It uploads the token via SSH in one shot:
+Run this **single command** from your local machine terminal. It uploads the token via SSH in one shot:
 
 ```bash
 # Replace YOUR_TOKEN and YOUR_AWS_IP
@@ -357,7 +357,7 @@ ps aux | grep smart_harvester
 **Cause**: Token expired or incorrect
 
 **Solution**:
-1. Regenerate token using `data_collection/harvesting/get_token.py` on laptop
+1. Regenerate token using `data_collection/harvesting/get_token.py` on local machine
 2. Upload new token (see Part 2.2)
 3. Restart harvester:
    ```bash
@@ -448,11 +448,11 @@ nohup python3 -u data_collection/harvesting/smart_harvester.py > harvester.log 2
 
 ## Part 4: Weekly Data Download (Saturday)
 
-Download the week's collected data to your laptop for training:
+Download the week's collected data to your local machine for training:
 
 ### 4.1 Download All Data
 
-From your **laptop terminal**:
+From your **local machine terminal**:
 
 ```bash
 # Create local destination folder
@@ -499,7 +499,7 @@ cd ~/alpha-lab-core
 tar -czf harvested_data_backup_$(date +%Y%m%d).tar.gz harvested_data/
 
 # Move backup to safe location or download
-scp harvested_data_backup_*.tar.gz ubuntu@YOUR_LAPTOP_IP:/backup/
+scp harvested_data_backup_*.tar.gz ubuntu@YOUR_LOCAL_MACHINE_IP:/backup/
 
 # Delete old raw files (CAREFUL!)
 rm -rf harvested_data/*.csv
@@ -511,13 +511,13 @@ rm -rf harvested_data/*.csv
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `data_collection/harvesting/smart_harvester.py` | AWS & Laptop | Main harvester script. Runs 09:15-15:30 IST. |
-| `data_collection/harvesting/get_token.py` | **Laptop Only** | Generates daily Fyers access token. |
-| `.env` | AWS & Laptop | **AWS**: Contains only `FYERS_CLIENT_ID` (Fyers App ID). **Laptop**: Contains both `FYERS_CLIENT_ID` and `FYERS_SECRET_KEY`. |
-| `access_token.txt` | **AWS Only** | Stores temporary daily token (expires nightly). Generated via `get_token.py` on laptop. |
+| `data_collection/harvesting/smart_harvester.py` | AWS & Local Machine | Main harvester script. Runs 09:15-15:30 IST. |
+| `data_collection/harvesting/get_token.py` | **Local Machine Only** | Generates daily Fyers access token. |
+| `.env` | AWS & Local Machine | **AWS**: Contains only `FYERS_CLIENT_ID` (Fyers App ID). **Local Machine**: Contains both `FYERS_CLIENT_ID` and `FYERS_SECRET_KEY`. |
+| `access_token.txt` | **AWS Only** | Stores temporary daily token (expires nightly). Generated via `get_token.py` on local machine. |
 | `harvester.log` | **AWS Only** | Log file to monitor harvester status. |
 | `harvested_data/*.csv` | AWS | Collected market depth data by date. |
-| `alpha-key.pem` | **Laptop Only** | AWS SSH key (NEVER upload to server or Git). |
+| `alpha-key.pem` | **Local Machine Only** | AWS SSH key (NEVER upload to server or Git). |
 
 ---
 
@@ -526,7 +526,7 @@ rm -rf harvested_data/*.csv
 ### Daily Workflow (08:30-09:10 AM)
 
 ```bash
-# On Laptop: Generate token
+# On Local Machine: Generate token
 python3 data_collection/harvesting/get_token.py
 
 # Upload token (speedster method)
@@ -549,7 +549,7 @@ ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "ps aux | grep smart_harvester"
 ### Restart Harvester
 
 ```bash
-# One-liner from laptop
+# One-liner from local machine
 ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "pkill -f data_collection/harvesting/smart_harvester.py && cd /home/ubuntu/alpha-lab-core && source .venv/bin/activate && nohup python3 -u data_collection/harvesting/smart_harvester.py > harvester.log 2>&1 &"
 ```
 

@@ -82,7 +82,7 @@ uv --version
    ```
 
    **Option B: For CPU Only**
-   *Use this for cloud servers without GPU or basic laptops.*
+   *Use this for cloud servers without GPU or basic local machines.*
    ```bash
    uv pip install -r requirements.txt (CPU)
    ```
