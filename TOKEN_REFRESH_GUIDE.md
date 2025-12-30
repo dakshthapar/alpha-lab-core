@@ -91,7 +91,37 @@ This setup runs a Lambda function daily at 7:00 AM to refresh your access token 
 
 ### Prerequisites
 
-1. **AWS Account** with CLI configured:
+> [!IMPORTANT]
+> **All setup steps are done from your LOCAL LAPTOP** using AWS CLI, except where noted.
+
+**1. Install AWS CLI on your local laptop**:
+
+**Arch Linux**:
+```bash
+sudo pacman -S aws-cli
+```
+
+**Ubuntu / Debian**:
+```bash
+sudo apt install awscli
+```
+
+**macOS**:
+```bash
+brew install awscli
+```
+
+**Verify installation**:
+```bash
+aws --version
+# Should show: aws-cli/2.x.x or higher
+```
+
+**2. AWS Account** with CLI configured **on your local laptop**:
+
+> [!TIP]
+> Before configuring, verify AWS CLI is installed: `aws --version`
+
    ```bash
    aws configure
    # Enter your AWS Access Key ID
@@ -99,12 +129,20 @@ This setup runs a Lambda function daily at 7:00 AM to refresh your access token 
    # Default region: ap-south-1
    ```
 
-2. **Install boto3**:
+   **Verify configuration worked**:
+   ```bash
+   aws sts get-caller-identity
+   # Should show your AWS account ID and user info
+   ```
+
+**3. Install boto3** on your local laptop:
    ```bash
    pip install boto3
    ```
 
 ### Step A1: Store Your PIN Securely
+
+**📍 Run from: LOCAL LAPTOP**
 
 ```bash
 aws secretsmanager create-secret \
@@ -116,6 +154,8 @@ aws secretsmanager create-secret \
 ```
 
 ### Step A2: Upload Credentials to AWS
+
+**📍 Run from: LOCAL LAPTOP** (from your `alpha-lab-core` project folder)
 
 ```bash
 # Upload CLIENT_ID
@@ -141,6 +181,8 @@ python data_collection/harvesting/aws_ssm_helper.py set \
 
 ### Step A3: Deploy Lambda Function
 
+**📍 Run from: LOCAL LAPTOP**
+
 ```bash
 python data_collection/harvesting/deploy_lambda_refresh.py
 ```
@@ -151,6 +193,8 @@ python data_collection/harvesting/deploy_lambda_refresh.py
 - Configures permissions to read/write SSM parameters
 
 ### Step A4: Test Lambda Manually
+
+**📍 Run from: LOCAL LAPTOP**
 
 ```bash
 aws lambda invoke \
@@ -168,6 +212,8 @@ cat output.json
 ```
 
 ### Step A5: Update Harvester to Use AWS
+
+**📍 Run from: AWS SERVER** (SSH into your AWS instance)
 
 When starting the harvester on AWS, add the `--use-ssm` flag:
 
