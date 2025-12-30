@@ -10,7 +10,11 @@ daily_token.txt
 refresh_token.txt
 
 # --- AWS Deployment (NEVER COMMIT) ---
+output.json
 lambda_deployment.zip
+lambda_package/
+awscliv2.zip
+aws/
 *.zip
 
 # --- Data & Logs ---
@@ -18,6 +22,8 @@ data/
 logs/
 log/
 fyers_logs/
+harvester.log
+*.log
 *.parquet
 *.csv
 *.db

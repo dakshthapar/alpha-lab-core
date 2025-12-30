@@ -48,7 +48,13 @@ Run the setup commands:
 
 ```bash
 # Update system and install dependencies
-sudo apt update && sudo apt install -y python3-pip python3-venv git
+sudo apt update && sudo apt install -y python3-pip python3-venv git unzip curl
+
+# Install AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version  # Verify installation
 
 # Clone the repository
 git clone https://github.com/dakshthapar/alpha-lab-core.git
@@ -241,12 +247,32 @@ The guide covers:
 - Deploying the Lambda function for automatic daily refresh
 - Testing and verifying automation
 
-### Quick Reference: Start Harvester with SSM
+### Quick Reference: Configure AWS on EC2 Instance
 
-After completing the TOKEN_REFRESH_GUIDE setup, start the harvester on AWS with SSM mode:
+**📍 Run from: AWS SERVER** (SSH into your AWS instance)
+
+> [!IMPORTANT]
+> When using `--use-ssm` mode, the EC2 instance needs AWS credentials to access SSM Parameter Store.
 
 ```bash
 ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP
+
+# Configure AWS CLI (one-time setup)
+aws configure
+# Enter your AWS Access Key ID
+# Enter your AWS Secret Access Key
+# Default region: ap-south-1
+# Output format: json
+
+# Verify access
+aws sts get-caller-identity
+```
+
+### Quick Reference: Start Harvester with SSM
+
+After completing the TOKEN_REFRESH_GUIDE setup and AWS configuration above, start the harvester:
+
+```bash
 cd ~/alpha-lab-core
 
 # Kill old harvester (if running)

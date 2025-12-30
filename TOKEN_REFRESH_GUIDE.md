@@ -136,7 +136,13 @@ aws --version
    ```
 
 **3. Install boto3** on your local laptop:
+   
+   > [!TIP]
+   > Make sure you're in the project directory with virtual environment activated.
+   
    ```bash
+   cd ~/path/to/alpha-lab-core
+   source .venv/bin/activate
    uv pip install boto3
    ```
 
