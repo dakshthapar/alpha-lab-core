@@ -46,15 +46,19 @@ def get_ist_time():
     return datetime.datetime.now(IST)
 
 def wait_for_market_open():
+    """Wait until market opens. If market is closed for the day, wait until next day's open."""
     now = get_ist_time()
     market_open = now.replace(hour=MARKET_OPEN_HOUR, minute=MARKET_OPEN_MINUTE, second=0, microsecond=0)
     market_close = now.replace(hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE, second=0, microsecond=0)
     
     if now > market_close:
-        log("Market is closed for the day. Exiting.", "INFO")
-        return False
-
-    if now < market_open:
+        # Market closed for today, wait until tomorrow's open
+        next_day_open = market_open + datetime.timedelta(days=1)
+        wait_seconds = (next_day_open - now).total_seconds()
+        log(f"Market is closed for the day. Waiting {wait_seconds/3600:.1f} hours until tomorrow's open...", "INFO")
+        time.sleep(wait_seconds)
+        log("Market Open! Resuming harvest.", "INFO")
+    elif now < market_open:
         wait_seconds = (market_open - now).total_seconds()
         log(f"Market not open yet. Waiting {wait_seconds:.0f} seconds...", "INFO")
         time.sleep(wait_seconds)
@@ -82,6 +86,25 @@ def get_access_token_from_ssm(region='ap-south-1'):
         log("   Make sure FYERS_ACCESS_TOKEN is set in SSM Parameter Store", "ERROR")
         return None
 
+def load_access_token(use_ssm):
+    """Load access token from SSM or local file. Can be called multiple times to refresh."""
+    if use_ssm:
+        log("Loading access token from AWS SSM...", "INFO")
+        token = get_access_token_from_ssm()
+        if not token:
+            log("CRITICAL ERROR: Failed to retrieve token from SSM.", "ERROR")
+            return None
+    else:
+        try:
+            with open("access_token.txt", "r") as f:
+                token = f.read().strip()
+            log("Token loaded from local file.", "DEBUG")
+        except FileNotFoundError:
+            log("CRITICAL ERROR: 'access_token.txt' not found.", "ERROR")
+            log("   Run get_token.py to generate tokens, or use --use-ssm for cloud mode", "ERROR")
+            return None
+    return token
+
 def main():
     if DEBUG_MODE:
         log("--- DIAGNOSTIC MODE ENABLED ---", "DEBUG")
@@ -93,21 +116,10 @@ def main():
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
-    # Load access token (from SSM or local file)
-    if args.use_ssm:
-        log("Using AWS SSM Parameter Store for token retrieval", "INFO")
-        access_token = get_access_token_from_ssm()
-        if not access_token:
-            return
-    else:
-        try:
-            with open("access_token.txt", "r") as f:
-                access_token = f.read().strip()
-            log("Token loaded from local file.", "DEBUG")
-        except FileNotFoundError:
-            log("CRITICAL ERROR: 'access_token.txt' not found.", "ERROR")
-            log("   Run get_token.py to generate tokens, or use --use-ssm for cloud mode", "ERROR")
-            return
+    # Initial token load
+    access_token = load_access_token(args.use_ssm)
+    if not access_token:
+        return
 
     try:
         fyers = fyersModel.FyersModel(client_id=CLIENT_ID, is_async=False, token=access_token, log_path="")
@@ -116,7 +128,22 @@ def main():
         log(f"Initialization Failed: {e}", "ERROR")
         return
 
-    if not wait_for_market_open():
+    # Wait for market to open (if not open yet)
+    wait_for_market_open()
+    
+    # Reload token after wait to pick up any updates (e.g., Lambda refresh at 7 AM)
+    log("Reloading access token to ensure it's fresh...", "INFO")
+    access_token = load_access_token(args.use_ssm)
+    if not access_token:
+        log("Failed to reload token. Exiting.", "ERROR")
+        return
+    
+    # Reinitialize Fyers with fresh token
+    try:
+        fyers = fyersModel.FyersModel(client_id=CLIENT_ID, is_async=False, token=access_token, log_path="")
+        log("Fyers Object Re-initialized with fresh token.", "DEBUG")
+    except Exception as e:
+        log(f"Re-initialization Failed: {e}", "ERROR")
         return
 
     log("--- HARVESTER ACTIVE ---", "INFO")
@@ -125,8 +152,27 @@ def main():
         while True:
             now = get_ist_time()
             if now.hour >= MARKET_CLOSE_HOUR and now.minute >= MARKET_CLOSE_MINUTE:
-                log("Market Closed. Stopping Harvester.", "INFO")
-                break
+                log("Market Closed. Pausing harvester until next trading day...", "INFO")
+                
+                # Wait for next market open
+                wait_for_market_open()
+                
+                # Reload token to pick up updates
+                log("Reloading access token after pause...", "INFO")
+                access_token = load_access_token(args.use_ssm)
+                if not access_token:
+                    log("Failed to reload token. Exiting.", "ERROR")
+                    break
+                
+                # Reinitialize Fyers with fresh token
+                try:
+                    fyers = fyersModel.FyersModel(client_id=CLIENT_ID, is_async=False, token=access_token, log_path="")
+                    log("Fyers Object Re-initialized with fresh token after pause.", "INFO")
+                except Exception as e:
+                    log(f"Re-initialization Failed: {e}", "ERROR")
+                    break
+                
+                log("--- HARVESTER RESUMED ---", "INFO")
             
             data_batch = []
             timestamp_str = now.isoformat()
