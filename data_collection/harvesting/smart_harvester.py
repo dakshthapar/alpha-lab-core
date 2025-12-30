@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # --- COMMAND LINE ARGUMENT SETUP ---
 parser = argparse.ArgumentParser(description="Fyers Market Depth Harvester")
 parser.add_argument("--debug", action="store_true", help="Enable verbose debug logging")
+parser.add_argument("--use-ssm", action="store_true", help="Retrieve access token from AWS SSM Parameter Store (for cloud deployment)")
 args = parser.parse_args()
 
 DEBUG_MODE = args.debug
@@ -63,6 +64,24 @@ def wait_for_market_open():
         
     return True
 
+def get_access_token_from_ssm(region='ap-south-1'):
+    """Retrieve access token from AWS SSM Parameter Store"""
+    try:
+        import boto3
+        log("Retrieving access token from AWS SSM...", "DEBUG")
+        ssm = boto3.client('ssm', region_name=region)
+        response = ssm.get_parameter(Name='FYERS_ACCESS_TOKEN', WithDecryption=True)
+        token = response['Parameter']['Value']
+        log("✅ Access token retrieved from SSM", "DEBUG")
+        return token
+    except ImportError:
+        log("❌ boto3 not installed. Install: pip install boto3", "ERROR")
+        return None
+    except Exception as e:
+        log(f"❌ Error retrieving token from SSM: {e}", "ERROR")
+        log("   Make sure FYERS_ACCESS_TOKEN is set in SSM Parameter Store", "ERROR")
+        return None
+
 def main():
     if DEBUG_MODE:
         log("--- DIAGNOSTIC MODE ENABLED ---", "DEBUG")
@@ -74,13 +93,21 @@ def main():
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
-    try:
-        with open("access_token.txt", "r") as f:
-            access_token = f.read().strip()
-        log("Token loaded successfully.", "DEBUG")
-    except FileNotFoundError:
-        log("CRITICAL ERROR: 'access_token.txt' not found.", "ERROR")
-        return
+    # Load access token (from SSM or local file)
+    if args.use_ssm:
+        log("Using AWS SSM Parameter Store for token retrieval", "INFO")
+        access_token = get_access_token_from_ssm()
+        if not access_token:
+            return
+    else:
+        try:
+            with open("access_token.txt", "r") as f:
+                access_token = f.read().strip()
+            log("Token loaded from local file.", "DEBUG")
+        except FileNotFoundError:
+            log("CRITICAL ERROR: 'access_token.txt' not found.", "ERROR")
+            log("   Run get_token.py to generate tokens, or use --use-ssm for cloud mode", "ERROR")
+            return
 
     try:
         fyers = fyersModel.FyersModel(client_id=CLIENT_ID, is_async=False, token=access_token, log_path="")

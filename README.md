@@ -72,7 +72,9 @@ Alpha Lab Core is organized into **4 development phases**:
 
 ### 📊 Real Market Integration
 - Fyers API integration for harvesting real-time Indian market data
+- **15-day automated token refresh** - Manual login only once every 15 days! (see [TOKEN_REFRESH_GUIDE.md](TOKEN_REFRESH_GUIDE.md))
 - **24/7 AWS cloud deployment** - Continuous data collection (see [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md))
+- AWS Lambda automation for daily access token renewal
 - Data validation and calibration against live order books
 - Side-by-side comparison tools for synthetic vs real data
 

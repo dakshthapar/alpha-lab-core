@@ -57,18 +57,57 @@ def main():
     response = session.generate_token()
 
     if "access_token" in response:
-        token = response["access_token"]
-        print("\nSUCCESS! HERE IS YOUR ACCESS TOKEN:")
-        print("-" * 60)
-        print(token)
-        print("-" * 60)
+        access_token = response["access_token"]
+        refresh_token = response.get("refresh_token", "")
         
-        # Save locally for reference
+        print("\n" + "="*70)
+        print("✅ SUCCESS! TOKENS GENERATED")
+        print("="*70)
+        
+        print("\n📌 ACCESS TOKEN (Valid for 1 day, expires at 6:00 AM tomorrow):")
+        print("-" * 70)
+        print(access_token)
+        print("-" * 70)
+        
+        # Save access token locally
         with open("daily_token.txt", "w") as f:
-            f.write(token)
-        print("Saved to daily_token.txt (DO NOT COMMIT THIS FILE)")
+            f.write(access_token)
+        print("✅ Saved to: daily_token.txt")
+        
+        if refresh_token:
+            print("\n🔄 REFRESH TOKEN (Valid for 15 days - enables automated refresh):")
+            print("-" * 70)
+            print(refresh_token)
+            print("-" * 70)
+            
+            # Save refresh token locally
+            with open("refresh_token.txt", "w") as f:
+                f.write(refresh_token)
+            print("✅ Saved to: refresh_token.txt")
+            
+            print("\n" + "="*70)
+            print("📋 NEXT STEPS FOR AWS AUTOMATION (15-Day Auto-Refresh)")
+            print("="*70)
+            print("\n1️⃣  Upload REFRESH TOKEN to AWS (for automated daily refresh):")
+            print("   python data_collection/harvesting/aws_ssm_helper.py set \\")
+            print("       --name FYERS_REFRESH_TOKEN --value <paste_refresh_token_here>")
+            print("\n2️⃣  Upload ACCESS TOKEN to AWS (for immediate use):")
+            print("   python data_collection/harvesting/aws_ssm_helper.py set \\")
+            print("       --name FYERS_ACCESS_TOKEN --value <paste_access_token_here>")
+            print("\n3️⃣  Deploy Lambda function (one-time setup):")
+            print("   python data_collection/harvesting/deploy_lambda_refresh.py")
+            print("\n💡 TIP: You only need to do this ONCE every 15 days!")
+            print("   Lambda will auto-refresh your access token daily at 7:00 AM.")
+            print("\n⚠️  SECURITY: These files are in .gitignore - NEVER commit them!")
+            print("="*70)
+        else:
+            print("\n⚠️  WARNING: No refresh_token in response.")
+            print("   You may need to enable refresh tokens in Fyers API settings.")
+        
+        print("\n✅ For local development, tokens are ready in the current folder.")
+        print("   DO NOT COMMIT: daily_token.txt or refresh_token.txt")
     else:
-        print("Failed to generate token:")
+        print("\n❌ Failed to generate token:")
         print(response)
 
 if __name__ == "__main__":

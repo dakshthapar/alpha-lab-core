@@ -116,7 +116,56 @@ Run this command to check if ABIDES is correctly installed and importable:
 python -c "import abides_core; import abides_markets; print('✅ ABIDES Installed Successfully')"
 ```
 
-## Phase 4: Validation Run
+---
+
+## Phase 4: AWS Configuration (Optional - For Cloud Deployment)
+
+> [!NOTE]
+> This section is **optional** and only needed if you plan to run the 24/7 cloud harvester with automated token refresh.
+
+### 4.1 Install AWS CLI
+
+**Arch Linux**:
+```bash
+sudo pacman -S aws-cli
+```
+
+**Ubuntu / Debian**:
+```bash
+sudo apt install awscli
+```
+
+### 4.2 Configure AWS Credentials
+
+```bash
+aws configure
+```
+
+**You'll be prompted for**:
+- AWS Access Key ID
+- AWS Secret Access Key
+- Default region name: **ap-south-1** (Mumbai region recommended for Indian markets)
+- Default output format: **json**
+
+### 4.3 Verify AWS Setup
+
+```bash
+# Test AWS CLI
+aws sts get-caller-identity
+
+# Expected output: Your AWS account ID and user info
+```
+
+### 4.4 Set Up Token Automation (15-Day Refresh)
+
+Follow the complete guide in [TOKEN_REFRESH_GUIDE.md](TOKEN_REFRESH_GUIDE.md) to:
+- Deploy AWS Lambda for automated token refresh
+- Configure SSM Parameter Store for credentials
+- Set up CloudWatch Events for daily triggers
+
+---
+
+## Phase 5: Validation Run
 
 To verify that the Simulation Factory and detailed market regimes are working correctly, run the factory in test mode.
 
@@ -133,7 +182,7 @@ ls -lh data/training_batches/
 ```
 *Success: You should see files like `sim_day_1000_STANDARD.parquet`, `sim_day_1001_VOLATILE.parquet`, etc.*
 
-## Phase 5: Data Pipeline (After Simulation)
+## Phase 6: Data Pipeline (After Simulation)
 
 Once you have generated simulation data, process it into train/val/test sets:
 

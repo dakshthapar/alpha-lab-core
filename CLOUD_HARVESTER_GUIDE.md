@@ -200,7 +200,126 @@ Stop with `Ctrl+C` once verified.
 
 ---
 
-## Part 2: The Daily Ritual (08:30 AM - 09:10 AM)
+## Part 2: Token Management - Two Options
+
+> [!NOTE]
+> **NEW**: You can now automate token refresh for 15 days! Choose one of these workflows:
+
+### ✅ **Option A: Automated 15-Day Refresh (Recommended)**
+- **Manual work**: Once every 15 days
+- **Setup time**: 30-45 minutes (one-time)
+- **How it works**: AWS Lambda auto-refreshes your access token daily
+- **See**: [Part 2A: Automated Token Refresh](#part-2a-automated-token-refresh-15-days)
+
+### ⚙️ **Option B: Manual Daily Tokens (Legacy)**
+- **Manual work**: Every day before market open
+- **Setup time**: 2-3 minutes daily
+- **How it works**: You generate and upload tokens manually
+- **See**: [Part 2B: Manual Daily Tokens](#part-2b-manual-daily-tokens-legacy)
+
+---
+
+## Part 2A: Automated Token Refresh (15 Days)
+
+**Time Required (One-Time Setup)**: 30-45 minutes  
+**Repeats Every**: 15 days
+
+> [!IMPORTANT]
+> This is a **one-time setup**. After this, your tokens will auto-refresh daily for 15 days!
+
+### 2A.1: First-Time Setup (Do This Once)
+
+Follow the complete setup guide in [TOKEN_REFRESH_GUIDE.md](TOKEN_REFRESH_GUIDE.md).
+
+**Quick Summary**:
+
+1. **Generate tokens** (on local machine):
+   ```bash
+   cd ~/path/to/alpha-lab-core
+   python3 data_collection/harvesting/get_token.py
+   ```
+   You'll get: `access_token` (1-day) + `refresh_token` (15-day)
+
+2. **Add PIN to .env**:
+   ```bash
+   echo "FYERS_PIN=YOUR_4_DIGIT_PIN" >> .env
+   ```
+
+3. **Store PIN in AWS Secrets Manager**:
+   ```bash
+   aws secretsmanager create-secret --name FYERS_PIN --secret-string "YOUR_PIN" --region ap-south-1
+   ```
+
+4. **Upload credentials to AWS SSM**:
+   ```bash
+   # From your local machine project folder
+   python3 data_collection/harvesting/aws_ssm_helper.py set --name FYERS_CLIENT_ID --value <your_client_id>
+   python3 data_collection/harvesting/aws_ssm_helper.py set --name FYERS_SECRET_KEY --value <your_secret_key>
+   python3 data_collection/harvesting/aws_ssm_helper.py set --name FYERS_REFRESH_TOKEN --value <paste_refresh_token_here>
+   python3 data_collection/harvesting/aws_ssm_helper.py set --name FYERS_ACCESS_TOKEN --value <paste_access_token_here>
+   ```
+
+5. **Deploy Lambda function** (one-time):
+   ```bash
+   python3 data_collection/harvesting/deploy_lambda_refresh.py
+   ```
+
+6. **Update harvester to use AWS SSM**:
+   ```bash
+   ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP
+   cd ~/alpha-lab-core
+   
+   # Kill old harvester
+   pkill -f smart_harvester
+   
+   # Start with SSM mode
+   source .venv/bin/activate
+   nohup python3 -u data_collection/harvesting/smart_harvester.py --use-ssm > harvester.log 2>&1 &
+   ```
+
+### 2A.2: The 15-Day Ritual (Repeat This Every 15 Days)
+
+**Time Required**: 2-3 minutes  
+**When**: After your refresh token expires (every 15 days)
+
+1. **Generate new tokens** (on local machine):
+   ```bash
+   cd ~/path/to/alpha-lab-core
+   python3 data_collection/harvesting/get_token.py
+   ```
+
+2. **Upload new refresh token to AWS**:
+   ```bash
+   python3 data_collection/harvesting/aws_ssm_helper.py set \
+       --name FYERS_REFRESH_TOKEN \
+       --value <paste_new_refresh_token_here>
+   
+   python3 data_collection/harvesting/aws_ssm_helper.py set \
+       --name FYERS_ACCESS_TOKEN \
+       --value <paste_new_access_token_here>
+   ```
+
+3. **Done!** Lambda will handle daily refreshes for the next 15 days.
+
+### 2A.3: Verify Automation is Working
+
+Check that Lambda is refreshing tokens automatically:
+
+```bash
+# View Lambda logs
+aws logs tail /aws/lambda/FyersTokenRefresh --follow --region ap-south-1
+
+# Test Lambda manually
+aws lambda invoke --function-name FyersTokenRefresh output.json --region ap-south-1
+cat output.json
+
+# Check harvester is using fresh tokens
+ssh -i alpha-key.pem ubuntu@YOUR_AWS_IP "tail -20 ~/alpha-lab-core/harvester.log"
+```
+
+---
+
+## Part 2B: Manual Daily Tokens (Legacy)
 
 > [!WARNING]
 > Fyers Access Tokens expire every night at midnight. You **must** regenerate and upload a new token before market open (09:15 IST).
