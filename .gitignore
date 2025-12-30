@@ -8,6 +8,7 @@ fyers_credentials.txt
 access_token.txt
 daily_token.txt
 refresh_token.txt
+rootkey.csv
 
 # --- AWS Deployment (NEVER COMMIT) ---
 output.json
