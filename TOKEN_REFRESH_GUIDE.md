@@ -137,7 +137,7 @@ aws --version
 
 **3. Install boto3** on your local laptop:
    ```bash
-   pip install boto3
+   uv pip install boto3
    ```
 
 ### Step A1: Store Your PIN Securely
@@ -334,7 +334,7 @@ When your refresh token expires (after 15 days), run Step B1 again.
 
 **Solution**:
 ```bash
-pip install boto3
+uv pip install boto3
 ```
 
 ---

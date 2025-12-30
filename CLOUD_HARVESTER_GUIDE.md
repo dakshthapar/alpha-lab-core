@@ -58,8 +58,11 @@ cd alpha-lab-core
 python3 -m venv .venv
 source .venv/bin/activate
 
+# Install uv (fast package installer)
+pip install uv
+
 # Install Python dependencies
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 **Verification**:
