@@ -183,9 +183,13 @@ nohup python3 -u data_collection/harvesting/smart_harvester.py --use-ssm > harve
 
 ### 🎉 Done! What Happens Now?
 
-- **Every 7:00 AM**: Lambda runs automatically and refreshes your access token
-- **Every 9:15 AM**: Harvester uses the fresh token to collect market data
+- **Every 7:00 AM**: Lambda runs automatically and refreshes your access token in SSM
+- **Harvester behavior**: The smart harvester now **pauses** when market closes instead of exiting, and automatically **resumes the next trading day at 9:15 AM** with the freshly updated token
+- **Token pickup**: After any wait period (startup or market close), the harvester reloads the token from SSM to ensure it's always using the latest version
 - **Every 15 days**: You manually run `get_token.py` once to get a new refresh token
+
+> [!NOTE]
+> The harvester intelligently picks up token updates whether it's waiting for initial market open or resuming after market close.
 
 ---
 

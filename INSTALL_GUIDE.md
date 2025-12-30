@@ -182,29 +182,28 @@ ls -lh data/training_batches/
 ```
 *Success: You should see files like `sim_day_1000_STANDARD.parquet`, `sim_day_1001_VOLATILE.parquet`, etc.*
 
-## Phase 6: Data Pipeline (After Simulation)
+## Phase 6: Next Steps
 
-Once you have generated simulation data, process it into train/val/test sets:
+**For Dataset Generation** (Synthetic market data):
+- See [DATASET_GENERATION_GUIDE.md](DATASET_GENERATION_GUIDE.md) for complete instructions on:
+  - Generating test data
+  - Large-scale parallel simulation
+  - Splitting into train/val/test sets
+  - Creating OOD test data
+  - Data validation
 
-```bash
-# Split batch files by regime and merge each set
-python data_collection/processing/split_and_merge.py
-```
+**For Real Market Data Collection** (Fyers API):
+- See [FYERS_DATA_HARVESTING_GUIDE.md](FYERS_DATA_HARVESTING_GUIDE.md) for:
+  - Setting up Fyers API credentials
+  - Generating access tokens
+  - Running the harvester locally
+  - Understanding data formats
 
-**This creates:**
-- `data/TRAIN.parquet` (70% of data) - For model training
-- `data/VAL.parquet` (15% of data) - For hyperparameter tuning
-- `data/TEST.parquet` (15% of data) - For final evaluation
+**For 24/7 Cloud Data Collection**:
+- See [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md) for AWS deployment
 
-**Optional: Generate OOD (Out-of-Distribution) Test Data**
-```bash
-# Generate fresh data with different seeds for robustness testing
-python data_collection/simulation/launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
-
-# After completion, merge OOD data
-python data_collection/processing/merge_ood.py
-```
-This creates `data/TEST_OOD.parquet` for testing model generalization on completely unseen trajectories.
+**For Automated Token Refresh**:
+- See [TOKEN_REFRESH_GUIDE.md](TOKEN_REFRESH_GUIDE.md) for 15-day token automation
 
 ---
 **Folder Structure Reference**

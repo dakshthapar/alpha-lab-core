@@ -88,84 +88,59 @@ Alpha Lab Core is organized into **4 development phases**:
 
 ## 📦 Installation
 
-### Quick Start (Arch Linux / Ubuntu)
+**Complete installation guide**: [INSTALL_GUIDE.md](INSTALL_GUIDE.md)
 
-**Full installation instructions available in [INSTALL_GUIDE.md](INSTALL_GUIDE.md)**
-
-**For 24/7 cloud data harvesting, see [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md)**
+### Quick Setup
 
 ```bash
-# 1. Clone the repository
+# Clone repository
 git clone https://github.com/dakshthapar/alpha-lab-core.git
 cd alpha-lab-core
 
-# 2. Initialize ABIDES submodule
+# Initialize ABIDES submodule
 git submodule update --init --recursive
 
-# 3. Create virtual environment
+# Create environment and install dependencies
 python3 -m venv .venv
 source .venv/bin/activate
-
-# 4. Install uv (fast package installer)
 pip install uv
+uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match  # or requirements.txt for CPU
 
-# 5. Install dependencies
-# For GPU (CUDA 12.1):
-uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match
-# OR for CPU only:
-uv pip install -r requirements.txt (CPU)
-
-# 6. Install ABIDES from source
+# Install ABIDES
 cd libs/abides/abides-core && uv pip install -e .
-cd ../abides-markets && uv pip install -e .
-cd ../../../
+cd ../abides-markets && uv pip install -e . && cd ../../../
 ```
+
+**Next steps**: See [INSTALL_GUIDE.md](INSTALL_GUIDE.md) for platform-specific instructions and validation.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1️⃣ Generate Test Data (3 Days)
-Verify your setup with a quick test:
+### Choose Your Path
+
+**📊 Generate Synthetic Market Data**
+- Multi-regime simulation (Standard, Volatile, Momentum)
+- Parallel processing for mass production
+- Complete guide: [DATASET_GENERATION_GUIDE.md](DATASET_GENERATION_GUIDE.md)
+
+**📈 Collect Real Market Data (Fyers API)**
+- Real-time Indian market depth data
+- Local development or 24/7 cloud deployment
+- Getting started: [FYERS_DATA_HARVESTING_GUIDE.md](FYERS_DATA_HARVESTING_GUIDE.md)
+- Production deployment: [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md)
+
+### Quick Test (Synthetic Data)
+
 ```bash
+# Verify installation with test run (3 days, one per regime)
 python data_collection/simulation/regime_factory.py --test-mode
+
+# Check output
+ls -lh data/training_batches/
 ```
 
-### 2️⃣ Large-Scale Simulation
-Generate thousands of trading days using parallel processing:
-```bash
-# Example: 5000 days using 16 cores
-python data_collection/simulation/launch_parallel.py --total-days 5000 --cores 16
-
-# With time limit (useful for cloud budgets):
-python data_collection/simulation/launch_parallel.py --total-days 10000 --cores 32 --duration 4.0
-```
-
-### 3️⃣ Split and Merge Data
-Split batch files by regime into train/val/test, then merge each:
-```bash
-python data_collection/processing/split_and_merge.py
-```
-**Output**: `TRAIN.parquet` (70%), `VAL.parquet` (15%), `TEST.parquet` (15%)
-
-✨ **Stratified splitting** maintains regime distribution across all splits using streaming merge for memory efficiency.
-
-### 4️⃣ (Optional) Generate OOD Test Data
-For robustness testing, generate fresh data with different random seeds:
-```bash
-# Generate 500 new days with seed offset
-python data_collection/simulation/launch_parallel.py --total-days 500 --start-seed 20000 --cores 16
-
-# Merge OOD data
-python data_collection/processing/merge_ood.py
-```
-**Output**: `TEST_OOD.parquet` - tests model on completely unseen trajectories
-
-### 5️⃣ Validate Data Quality
-Verify spread, volatility, and LOB statistics:
-```bash
-python validation/validate_data_quality.py
-```
+For complete workflows, see the specialized guides above.
 
 ---
 
@@ -222,40 +197,53 @@ alpha-lab-core/
 │
 │
 ├── 📄 Documentation
-│   ├── README.md                # ⭐ You are here
-│   ├── INSTALL_GUIDE.md         # Detailed installation instructions
-│   ├── CLOUD_HARVESTER_GUIDE.md # ⭐ AWS deployment & 24/7 data collection
-│   ├── CONTRIBUTING.md          # Contribution guidelines
-│   └── LICENSE                  # Apache 2.0 License
+│   ├── README.md                           # ⭐ You are here - Project overview
+│   ├── INSTALL_GUIDE.md                    # Installation instructions
+│   ├── DATASET_GENERATION_GUIDE.md         # Synthetic data generation
+│   ├── FYERS_DATA_HARVESTING_GUIDE.md       # Real market data basics
+│   ├── CLOUD_HARVESTER_GUIDE.md            # AWS 24/7 deployment
+│   ├── TOKEN_REFRESH_GUIDE.md              # Automated token refresh
+│   ├── CONTRIBUTING.md                     # Contribution guidelines
+│   └── LICENSE                             # Apache 2.0 License
 │
 └── 📦 Dependencies
-    ├── requirements.txt         # Base dependencies
-    ├── requirements.txt (CPU)     # CPU-only PyTorch
-    └── requirements-gpu.txt     # CUDA 12.1 PyTorch
+    ├── requirements.txt                    # Base dependencies (CPU)
+    └── requirements-gpu.txt                # CUDA 12.1 PyTorch
 ```
 
 ---
 
-## 🗄️ Data Schema
+## 📚 Documentation Guide
 
-### Generated Parquet Files
+### Installation & Setup
+- [INSTALL_GUIDE.md](INSTALL_GUIDE.md) - System setup for local development or AWS
 
-Each simulation day produces a Parquet file with the following schema:
+### Data Generation
+- [DATASET_GENERATION_GUIDE.md](DATASET_GENERATION_GUIDE.md) - Synthetic market simulation
+  - Multi-regime simulation details
+  - Parallel processing at scale
+  - Data schema and formats
+  - Train/val/test splitting
+  - Validation tools
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `timestamp` | `int64` | Nanosecond timestamp from market open |
-| `event_type` | `str` | Event type (e.g., `ORDER_ACCEPTED`, `ORDER_EXECUTED`) |
-| `order_id` | `int64` | Unique order identifier |
-| `side` | `str` | `BID` or `ASK` |
-| `price` | `float64` | Order price in cents |
-| `quantity` | `int64` | Order quantity |
-| `agent_id` | `int64` | ID of submitting agent |
+### Real Market Data
+- [FYERS_DATA_HARVESTING_GUIDE.md](FYERS_DATA_HARVESTING_GUIDE.md) - Getting started with real data
+  - Fyers API setup
+  - Local harvester usage
+  - Data formats
+  
+- [CLOUD_HARVESTER_GUIDE.md](CLOUD_HARVESTER_GUIDE.md) - 24/7 AWS deployment
+  - AWS EC2 setup
+  - Background operation
+  - Monitoring and maintenance
+  
+- [TOKEN_REFRESH_GUIDE.md](TOKEN_REFRESH_GUIDE.md) - Automated authentication
+  - 15-day token automation
+  - AWS Lambda setup
+  - Troubleshooting
 
-**File Naming Convention:**
-- `sim_day_1000_STANDARD.parquet` - Standard regime
-- `sim_day_1001_VOLATILE.parquet` - Volatile regime  
-- `sim_day_1002_MOMENTUM.parquet` - Momentum regime
+### Contributing
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
 
 ---
 
