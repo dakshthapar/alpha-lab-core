@@ -153,46 +153,36 @@ aws secretsmanager create-secret \
 # Replace 1234 with your actual PIN
 ```
 
-### Step A2: Upload Credentials to AWS
+### Step A2: Deploy Lambda Function (Automatic Upload)
 
 **📍 Run from: LOCAL LAPTOP** (from your `alpha-lab-core` project folder)
 
-```bash
-# Upload CLIENT_ID
-python data_collection/harvesting/aws_ssm_helper.py set \
-    --name FYERS_CLIENT_ID \
-    --value YOUR_CLIENT_ID_HERE
+> [!NOTE]
+> The deployment script now **automatically** reads credentials from your `.env` file and token files, then uploads them to AWS. No manual upload needed!
 
-# Upload SECRET_KEY
-python data_collection/harvesting/aws_ssm_helper.py set \
-    --name FYERS_SECRET_KEY \
-    --value YOUR_SECRET_KEY_HERE
+**Prerequisites:**
+- `.env` file must contain: `FYERS_CLIENT_ID`, `FYERS_SECRET_KEY`, `FYERS_PIN`
+- Token files must exist: `refresh_token.txt`, `access_token.txt` (or `daily_token.txt`)
 
-# Upload REFRESH TOKEN (from Step 1)
-python data_collection/harvesting/aws_ssm_helper.py set \
-    --name FYERS_REFRESH_TOKEN \
-    --value <paste_refresh_token_from_step1>
-
-# Upload ACCESS TOKEN (from Step 1)
-python data_collection/harvesting/aws_ssm_helper.py set \
-    --name FYERS_ACCESS_TOKEN \
-    --value <paste_access_token_from_step1>
-```
-
-### Step A3: Deploy Lambda Function
-
-**📍 Run from: LOCAL LAPTOP**
-
+**Run deployment:**
 ```bash
 python data_collection/harvesting/deploy_lambda_refresh.py
 ```
+
+**What it does automatically:**
+1. 📤 Uploads credentials from `.env` to AWS SSM
+2. 📤 Uploads tokens from files to AWS SSM  
+3. 📤 Uploads PIN to AWS Secrets Manager
+4. 📦 Creates deployment package with dependencies
+5. 🚀 Deploys/updates Lambda function
+6. ⏰ Sets up EventBridge daily trigger
 
 **What it does**:
 - Creates a Lambda function called `FyersTokenRefresh`
 - Sets up daily trigger at 7:00 AM IST
 - Configures permissions to read/write SSM parameters
 
-### Step A4: Test Lambda Manually
+### Step A3: Test Lambda Manually
 
 **📍 Run from: LOCAL LAPTOP**
 
@@ -211,7 +201,7 @@ cat output.json
 {"statusCode": 200, "body": "{\"message\": \"✅ Token refresh completed successfully!\"}"}
 ```
 
-### Step A5: Update Harvester to Use AWS
+### Step A4: Update Harvester to Use AWS
 
 **📍 Run from: AWS SERVER** (SSH into your AWS instance)
 

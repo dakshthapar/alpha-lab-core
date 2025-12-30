@@ -20,6 +20,7 @@ import json
 import zipfile
 import boto3
 from botocore.exceptions import ClientError
+from dotenv import load_dotenv
 
 # Configuration
 LAMBDA_FUNCTION_NAME = 'FyersTokenRefresh'
@@ -73,16 +74,127 @@ TRUST_POLICY = {
     ]
 }
 
+def upload_credentials_from_env(region=DEFAULT_REGION):
+    """Read credentials from .env and upload to AWS SSM/Secrets Manager"""
+    print("📤 Uploading credentials from .env to AWS...")
+    
+    # Load .env file
+    load_dotenv()
+    
+    # Get credentials from environment
+    client_id = os.getenv('FYERS_CLIENT_ID')
+    secret_key = os.getenv('FYERS_SECRET_KEY')
+    pin = os.getenv('FYERS_PIN')
+    
+    # Get tokens from files
+    try:
+        with open('refresh_token.txt', 'r') as f:
+            refresh_token = f.read().strip()
+    except FileNotFoundError:
+        print("   ⚠️  refresh_token.txt not found, skipping refresh token upload")
+        refresh_token = None
+    
+    try:
+        with open('daily_token.txt', 'r') as f:
+            access_token = f.read().strip()
+    except FileNotFoundError:
+        try:
+            with open('access_token.txt', 'r') as f:
+                access_token = f.read().strip()
+        except FileNotFoundError:
+            print("   ⚠️  access_token.txt not found, skipping access token upload")
+            access_token = None
+    
+    if not all([client_id, secret_key, pin]):
+        print("   ❌ Missing credentials in .env file")
+        print("   Required: FYERS_CLIENT_ID, FYERS_SECRET_KEY, FYERS_PIN")
+        return False
+    
+    ssm = boto3.client('ssm', region_name=region)
+    secrets = boto3.client('secretsmanager', region_name=region)
+    
+    # Upload to SSM Parameter Store
+    params = [
+        ('FYERS_CLIENT_ID', client_id),
+        ('FYERS_SECRET_KEY', secret_key),
+    ]
+    
+    if refresh_token:
+        params.append(('FYERS_REFRESH_TOKEN', refresh_token))
+    
+    if access_token:
+        params.append(('FYERS_ACCESS_TOKEN', access_token))
+    
+    for param_name, param_value in params:
+        try:
+            ssm.put_parameter(
+                Name=param_name,
+                Value=param_value,
+                Type='SecureString',
+                Overwrite=True
+            )
+            print(f"   ✅ Uploaded {param_name} to SSM")
+        except Exception as e:
+            print(f"   ❌ Failed to upload {param_name}: {e}")
+            return False
+    
+    # Upload PIN to Secrets Manager
+    try:
+        try:
+            secrets.create_secret(
+                Name='FYERS_PIN',
+                SecretString=pin
+            )
+            print(f"   ✅ Created FYERS_PIN in Secrets Manager")
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ResourceExistsException':
+                secrets.update_secret(
+                    SecretId='FYERS_PIN',
+                    SecretString=pin
+                )
+                print(f"   ✅ Updated FYERS_PIN in Secrets Manager")
+            else:
+                raise
+    except Exception as e:
+        print(f"   ❌ Failed to upload PIN: {e}")
+        return False
+    
+    print("✅ All credentials uploaded successfully!")
+    return True
+
 def create_deployment_package():
     """Create a ZIP file with Lambda function and dependencies"""
+    import subprocess
+    import shutil
+    
     print("📦 Creating deployment package...")
     
     zip_filename = 'lambda_deployment.zip'
+    package_dir = 'lambda_package'
     
-    with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        # Add the main Lambda function
-        zipf.write('data_collection/harvesting/refresh_token.py', 'refresh_token.py')
-        print("   ✅ Added refresh_token.py")
+    # Clean up old package directory if exists
+    if os.path.exists(package_dir):
+        shutil.rmtree(package_dir)
+    os.makedirs(package_dir)
+    
+    # Install requests library to package directory
+    print("   📥 Installing requests library...")
+    subprocess.run(
+        ['pip', 'install', 'requests', '-t', package_dir],
+        check=True,
+        capture_output=True
+    )
+    print("   ✅ requests library installed")
+    
+    # Copy Lambda function to package directory
+    shutil.copy('data_collection/harvesting/refresh_token.py', os.path.join(package_dir, 'refresh_token.py'))
+    print("   ✅ Added refresh_token.py")
+    
+    # Create ZIP file from package directory
+    shutil.make_archive(zip_filename.replace('.zip', ''), 'zip', package_dir)
+    
+    # Clean up package directory
+    shutil.rmtree(package_dir)
     
     print(f"✅ Deployment package created: {zip_filename}")
     return zip_filename
@@ -141,12 +253,7 @@ def create_lambda_function(zip_filename, role_arn, region=DEFAULT_REGION):
             Code={'ZipFile': zip_content},
             Description='Automated Fyers access token refresh',
             Timeout=TIMEOUT,
-            MemorySize=MEMORY_SIZE,
-            Environment={
-                'Variables': {
-                    'AWS_REGION': region
-                }
-            }
+            MemorySize=MEMORY_SIZE
         )
         function_arn = response['FunctionArn']
         print(f"   ✅ Function created: {function_arn}")
@@ -229,7 +336,14 @@ def main():
     region = os.environ.get('AWS_REGION', DEFAULT_REGION)
     print(f"\n📍 Region: {region}\n")
     
+    # Step 0: Upload credentials from .env to AWS
+    print()
+    if not upload_credentials_from_env(region):
+        print("\n❌ Credential upload failed. Exiting.")
+        sys.exit(1)
+    
     # Step 1: Create deployment package
+    print()
     zip_filename = create_deployment_package()
     
     # Step 2: Create IAM role
